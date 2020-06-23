@@ -1,4 +1,4 @@
-module quizdrum
+module github.com/sushovande/quizdrum
 
 go 1.14
 
