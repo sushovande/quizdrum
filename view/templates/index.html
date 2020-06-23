@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<!--
+ Copyright 2020 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<html lang="en">
+<head>
+  <title>Quiz Homepage</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google" content="notranslate">
+  <meta name="description" content="A service that allows participating and creating quizzes, where the flow of the game is controlled by the quizmaster.">
+  <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+  <script src="/static/game.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Calistoga&family=Lato:ital,wght@0,400;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <header class=" mdc-top-app-bar">
+    <div class="mdc-top-app-bar__row">
+      <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+      <a href="/" class="app-bar-title-link"><span class="mdc-top-app-bar__title">QuizDrum</span></a> </section>
+      <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end">
+
+        {{if eq .U.GetId -1}}
+        <div class="mdc-touch-target-wrapper" id="loginbtn">
+          <a href="/login" class="mdc-button mdc-button--touch mdc-button--raised switch">
+            <div class="mdc-button__ripple"></div>
+            <span class="mdc-button__label">Log In</span>
+            <div class="mdc-button__touch"></div>
+          </a>
+        </div>
+
+        {{else if eq .U.GoogleUser.GetSub ""}}
+        <div class="mdc-chip mdc-menu-surface--anchor" role="row" id="user-chip">
+          <div class="mdc-chip__ripple"></div>
+          <i class="material-icons mdc-chip__icon mdc-chip__icon--leading">face</i>
+          <span role="gridcell">
+            <span role="button" tabindex="0" class="mdc-chip__primary-action">
+              <span class="mdc-chip__text">Guest {{.U.GetId}}</span>
+            </span>
+          </span>
+  
+          <div class="mdc-menu mdc-menu-surface">
+            <ul class="mdc-list" role="menu" aria-hidden="true" aria-orientation="vertical" tabindex="-1">
+              <li class="mdc-list-item" role="menuitem">
+                <span class="mdc-list-item__text">Logout</span>
+              </li>
+              <li class="mdc-list-item" role="menuitem">
+                <span class="mdc-list-item__text">Change Profile Name</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="mdc-touch-target-wrapper" id="loginbtn">
+          <a href="/logout" class="mdc-button mdc-button--touch mdc-button--raised switch">
+            <div class="mdc-button__ripple"></div>
+            <span class="mdc-button__label">Log Out</span>
+            <div class="mdc-button__touch"></div>
+          </a>
+        </div>
+
+        {{else}}
+        <div class="mdc-chip mdc-menu-surface--anchor" role="row" id="user-chip">
+          <div class="mdc-chip__ripple"></div>
+          <!-- TODO change this to the google profile picture -->
+          <i class="material-icons mdc-chip__icon mdc-chip__icon--leading">face</i>
+          <span role="gridcell">
+            <span role="button" tabindex="0" class="mdc-chip__primary-action">
+              <span class="mdc-chip__text">{{.U.GoogleUser.GetName}}</span>
+            </span>
+          </span>
+
+          <div class="mdc-menu mdc-menu-surface">
+            <ul class="mdc-list" role="menu" aria-hidden="true" aria-orientation="vertical" tabindex="-1">
+              <li class="mdc-list-item" role="menuitem">
+                <span class="mdc-list-item__text">Logout</span>
+              </li>
+              <li class="mdc-list-item" role="menuitem">
+                <span class="mdc-list-item__text">Change Profile Name</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="mdc-touch-target-wrapper" id="loginbtn">
+          <a href="/logout" class="mdc-button mdc-button--touch mdc-button--raised switch">
+            <div class="mdc-button__ripple"></div>
+            <span class="mdc-button__label">Log Out</span>
+            <div class="mdc-button__touch"></div>
+          </a>
+        </div>
+        {{end}}
+
+      </section>
+    </div>
+  </header>
+
+<div class="mdc-layout-grid">
+  <div class="mdc-layout-grid__inner">
+    <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-6">
+      <h2 class="mdc-typography--headline4 first-header">Quizzes:</h2>
+    </div>
+  </div>
+
+{{range .QM}}
+  <div class="mdc-layout-grid__inner quiz-line">
+    <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-6">
+        <div class="mdc-typography--body1">{{.Title}}</div>
+        <div class="mdc-list-item__secondary-text">{{.Description}}</div>
+    </div>
+    <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-6">
+      <div class="mdc-touch-target-wrapper" {{if .CannotWrite}}style="visibility:hidden"{{end}}>
+        <a href="/quizmaster/quiz/{{.ID}}/edit" class="mdc-button foo-button">
+          <div class="mdc-button__ripple"></div>
+          <span class="mdc-button__label">Edit</span>
+        </a>
+      </div>
+      <div class="mdc-touch-target-wrapper" {{if .CannotWrite}}style="visibility:hidden"{{end}}>
+        <a href="/quizmaster/quiz/{{.ID}}/live" class="mdc-button mdc-button--raised mdc-button--touch switch">
+          <div class="mdc-button__ripple"></div>
+          <span class="mdc-button__label">Present</span>
+        </a>
+      </div>
+      <div class="mdc-touch-target-wrapper">
+        <a href="/participant/quiz/{{.ID}}/createprofile" class="mdc-button mdc-button--raised mdc-button--touch">
+          <div class="mdc-button__ripple"></div>
+          <span class="mdc-button__label">Participate</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+{{end}}
+
+</div>
+
+<form id="newquiz" method="POST">
+<div class="mdc-layout-grid">
+  <div class="mdc-layout-grid__inner">
+    <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-6">
+      <h2 class="mdc-typography--headline4">Create a new quiz:</h2>
+    </div>
+  </div>
+
+<div class="mdc-layout-grid__inner">
+<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
+<label class="mdc-text-field mdc-text-field--filled new-quiz-title">
+  <span class="mdc-text-field__ripple"></span>
+  <input class="mdc-text-field__input" type="text" aria-labelledby="quiz-title-label" 
+    id="quiz-title" name="quiz-title">
+  <span class="mdc-floating-label" id="quiz-title-label">Title</span>
+  <span class="mdc-line-ripple"></span>
+</label>
+</div>
+</div>
+
+<div class="mdc-layout-grid__inner">
+<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
+<label class="mdc-text-field mdc-text-field--textarea">
+  <textarea class="mdc-text-field__input" rows="3" cols="40" aria-labelledby="quiz-descr-label" 
+    id="quiz-descr" name="quiz-descr"></textarea>
+  <span class="mdc-notched-outline">
+    <span class="mdc-notched-outline__leading"></span>
+    <span class="mdc-notched-outline__notch">
+      <span class="mdc-floating-label" id="quiz-descr-label">Description</span>
+    </span>
+    <span class="mdc-notched-outline__trailing"></span>
+  </span>
+</label>
+</div>
+</div>
+
+<div class="mdc-layout-grid__inner">
+  <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
+    <div class="mdc-touch-target-wrapper">
+      <button class="mdc-button mdc-button--raised mdc-button--touch" id="btncrt" type="button">
+        <div class="mdc-button__ripple"></div>
+        <span class="mdc-button__label">Create</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="mdc-layout-grid__inner">
+  <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
+    <div id="info"></div>
+  </div>
+</div>
+
+</div>
+</form>
+
+
+  <script>
+    window.onload = function() {
+      document.getElementById('btncrt').addEventListener('click', btncrtClick);
+      setupMaterial();
+      console.log("load has completed");
+    }
+
+    function btncrtClick(e) {
+      console.log("button was clicked");
+      const formElement = document.getElementById('newquiz');
+      const infoElement = document.getElementById('info');
+      const data = new URLSearchParams(new FormData(formElement));
+
+      postj('/api/quizmaster/newquiz', data)
+      .then( j => { 
+        window.location.href = '/quizmaster/quiz/' + j + '/edit';
+      })
+      .catch(showError);
+    }
+  </script>
+</body>
+</html>

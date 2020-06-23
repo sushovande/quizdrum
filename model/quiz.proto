@@ -1,0 +1,115 @@
+// Copyright 2020 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+package model;
+option go_package = "quizdrum/model";
+
+// A Quiz represents a single game with many questions, quizmasters, and participants.
+message Quiz {
+  optional int64 id = 1;
+  optional QuizState state = 2;
+
+  // What time we expect the quiz to start.
+  optional int64 expected_start_time = 3;
+  // What time the quiz actually started (the time of the first answer submission).
+  optional int64 actual_start_time = 4;
+
+  optional string title = 5;
+  optional string html_description = 6;
+
+  repeated Question questions = 7;
+  repeated int64 question_sequence = 11;
+  repeated QuizmasterProfile quizmasters = 9;
+  repeated ParticipantProfile participants = 8;
+
+  // During a live quiz, indicates the question ID that is currently being presented.
+  optional int64 live_question_id = 10;
+  // During a live quiz, indicates if the live question is currently accepting responses.
+  optional bool accepting_responses = 12;
+}
+
+// Quizmasters for a quiz identified by various IDs. 
+// At least one ID must be set. Equality checking will be done by
+// the priority 1 field if set, otherwise will move on to the next priority.
+message QuizmasterProfile {
+  // The user ID as stored in the local database's primary key.
+  // This will be set for the creator and guest users. Priority 2.
+  optional int64 user_id = 1;
+  // The google sub as set in the claim from OAuth. Set for
+  // creators who logged in via Google. Priority 1.
+  optional string google_sub = 2;
+  // The emial address as set in the claim from OAuth. Primarily
+  // set when the QM invites other people to edit. Priority 3.
+  optional string google_email = 3;
+}
+
+message ParticipantProfile {
+  optional int64 user_id = 1;
+  optional string profile_name = 2;
+  optional bool completed_registration = 3;
+}
+
+enum QuizState {
+  UNKNOWN_STATE = 0;
+  // QuizState NEW represents a quiz still in development, where no answer has been submitted yet.
+  NEW = 1;
+  // QuizState STARTED represents a quiz with at least one answer submitted.
+  STARTED = 2;
+  // QuizState ARCHIVED represents a quiz where the winners have been declared.
+  ARCHIVED = 3;
+}
+
+message Question {
+  optional int64 id = 1;
+  // Which quiz this question is a part of.
+  optional int64 quiz_id = 2;
+  optional string title = 3;
+  optional string html_body = 4;
+  optional AnswerType type = 5;
+  // Only valid if type = MULTIPLE_CHOICE_ANSWER
+  repeated AnswerChoice choices = 6;
+
+  // Responses to this question by the participants
+  repeated Answer answers = 7;
+}
+
+message AnswerChoice {
+  optional string html_body = 1;
+}
+
+enum AnswerType {
+  UNKNOWN_ANSWER_TYPE = 0;
+  TEXT_ANSWER = 1;
+  INT64_ANSWER = 2;
+  FLOAT_ANSWER = 3;
+  BOOL_ANSWER = 4;
+  MULTIPLE_CHOICE_ANSWER = 5;
+}
+
+message Answer {
+  optional int64 id = 1;
+  optional int64 question_id = 2;
+  optional int64 solver_id = 3;
+  optional AnswerType type = 4;
+
+  optional string ans_text = 5;
+  optional int64 ans_int = 6;
+  optional float ans_float = 7;
+  optional bool ans_bool = 8;
+  optional int64 ans_choice_index = 9;
+
+  optional int64 response_time_s = 10;
+  optional int64 points_awarded = 11;
+}

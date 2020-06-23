@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<!--
+ Copyright 2020 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<html lang="en">
+
+<head>
+  <title>Participate in the quiz live</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google" content="notranslate">
+  <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+  <script src="/static/game.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Calistoga&family=Lato:ital,wght@0,400;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+  <header class=" mdc-top-app-bar">
+    <div class="mdc-top-app-bar__row">
+      <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+        <a href="/" class="app-bar-title-link"><span class="mdc-top-app-bar__title">QuizDrum</span></a> </section>
+      <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end">
+
+        {{if eq .U.GetId -1}}
+        <div class="mdc-touch-target-wrapper" id="loginbtn">
+          <a href="/login" class="mdc-button mdc-button--touch mdc-button--raised switch">
+            <div class="mdc-button__ripple"></div>
+            <span class="mdc-button__label">Log In</span>
+            <div class="mdc-button__touch"></div>
+          </a>
+        </div>
+
+        {{else if eq .U.GoogleUser.GetSub ""}}
+        <div class="mdc-chip mdc-menu-surface--anchor" role="row" id="user-chip">
+          <div class="mdc-chip__ripple"></div>
+          <i class="material-icons mdc-chip__icon mdc-chip__icon--leading">face</i>
+          <span role="gridcell">
+            <span role="button" tabindex="0" class="mdc-chip__primary-action">
+              <span class="mdc-chip__text">{{.ProfileName}}</span>
+            </span>
+          </span>
+        </div>
+        <div class="mdc-touch-target-wrapper" id="loginbtn">
+          <a href="/logout" class="mdc-button mdc-button--touch mdc-button--raised switch">
+            <div class="mdc-button__ripple"></div>
+            <span class="mdc-button__label">Log Out</span>
+            <div class="mdc-button__touch"></div>
+          </a>
+        </div>
+
+        {{else}}
+        <div class="mdc-chip mdc-menu-surface--anchor" role="row" id="user-chip">
+          <div class="mdc-chip__ripple"></div>
+          <!-- TODO change this to the google profile picture -->
+          <i class="material-icons mdc-chip__icon mdc-chip__icon--leading">face</i>
+          <span role="gridcell">
+            <span role="button" tabindex="0" class="mdc-chip__primary-action">
+              <span class="mdc-chip__text">{{.ProfileName}}</span>
+            </span>
+          </span>
+        </div>
+        <div class="mdc-touch-target-wrapper" id="loginbtn">
+          <a href="/logout" class="mdc-button mdc-button--touch mdc-button--raised switch">
+            <div class="mdc-button__ripple"></div>
+            <span class="mdc-button__label">Log Out</span>
+            <div class="mdc-button__touch"></div>
+          </a>
+        </div>
+        {{end}}
+
+      </section>
+    </div>
+  </header>
+
+  <form id="ansform">
+  <div class="mdc-layout-grid">
+    <div class="mdc-layout-grid__inner">
+      <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-6">
+        <h2 class="mdc-typography--headline4 first-header">{{.Q.GetTitle}}</h2>
+        <p class="mdc-typography--body1">{{.Q.GetHtmlDescription}}</p>
+        <p class="mdc-typography--body1">This quiz is now live. The current question 
+          is shown below. <a href="/participant/quiz/{{.Q.GetId}}/scoreboard" target="_blank">See the 
+          scoreboard here</a>.</p>
+      </div>
+    </div>
+
+    <div class="mdc-layout-grid__inner">
+      <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-6">
+        <h2 class="mdc-typography--headline4">{{.Qn.GetTitle}}</h2>
+        <p class="mdc-typography--body1">{{.Qn.GetHtmlBody}}</p>
+      </div>
+    </div>
+
+    <div class="mdc-layout-grid__inner">
+      <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-6">
+        <input type="hidden" name="qz-id" id="qz-id" value="{{.Q.GetId}}">
+        <input type="hidden" name="qn-id" id="qn-id" value="{{.Qn.GetId}}">
+
+
+    <!-- weirdly, a nil ans turns into a zero ans in templates, that is why we compare .Ans.GetId to 0 -->
+    <input type="hidden" name="ans-id" id="ans-id" {{if ne .Ans.GetId 0}}value="{{.Ans.GetId}}"{{end}}>
+    {{if eq .Qn.GetType.Number 0}} {{/* UNKNOWN_ANSWER_TYPE */}}
+    <p class="mdc-typography--body1">Response not needed. Please wait for the quizmaster.</p>
+
+    {{else if eq .Qn.GetType.Number 1}} {{/* TEXT */}}
+    <label class="mdc-text-field mdc-text-field--filled longish-textbox">
+      <span class="mdc-text-field__ripple"></span>
+      <input class="mdc-text-field__input" type="text" {{if ne .Ans.GetId 0}}value="{{.Ans.GetAnsText}}"{{end}}
+          aria-labelledby="ans-text-label" id="ans-text" name="ans-text">
+      <span class="mdc-floating-label" id="ans-text-label">Your Answer</span>
+      <span class="mdc-line-ripple"></span>
+    </label>
+
+    {{else if eq .Qn.GetType.Number 2}} {{/* INT64 */}}
+    <label class="mdc-text-field mdc-text-field--filled longish-textbox">
+      <span class="mdc-text-field__ripple"></span>
+      <input class="mdc-text-field__input" type="number" aria-labelledby="ans-int64-label" 
+          id="ans-int64" name="ans-int64"  {{if ne .Ans.GetId 0}}value="{{.Ans.GetAnsInt}}"{{end}}>
+      <span class="mdc-floating-label" id="ans-int64-label">Answer (Numbers only)</span>
+      <span class="mdc-line-ripple"></span>
+    </label>
+    
+    {{else if eq .Qn.GetType.Number 3}} {{/* FLOAT */}}
+    <label class="mdc-text-field mdc-text-field--filled longish-textbox">
+      <span class="mdc-text-field__ripple"></span>
+      <input class="mdc-text-field__input" type="number" step="any" {{if ne .Ans.GetId 0}}value="{{.Ans.GetAnsFloat}}"{{end}}
+        aria-labelledby="ans-float-label" id="ans-float" name="ans-float">
+      <span class="mdc-floating-label" id="ans-float-label">Answer (Decimal numbers)</span>
+      <span class="mdc-line-ripple"></span>
+    </label>
+
+    {{else if eq .Qn.GetType.Number 4}} {{/* BOOL */}}
+    <div class="mdc-layout-grid__inner">
+      <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+        <div class="mdc-form-field">
+          <div class="mdc-radio">
+            <input class="mdc-radio__native-control" type="radio" id="ans-bool-true" 
+                name="ans-bool" value="true" {{if ne .Ans.GetId 0}}{{if .Ans.GetAnsBool}}checked{{end}}{{end}}>
+            <div class="mdc-radio__background">
+              <div class="mdc-radio__outer-circle"></div>
+              <div class="mdc-radio__inner-circle"></div>
+            </div>
+            <div class="mdc-radio__ripple"></div>
+          </div>
+          <label for="ans-bool-true">True</label>
+        </div>
+      </div>
+    </div>
+    <div class="mdc-layout-grid__inner">
+      <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+        <div class="mdc-form-field">
+          <div class="mdc-radio">
+            <input class="mdc-radio__native-control" type="radio" id="ans-bool-false" 
+                name="ans-bool" value="false" {{if ne .Ans.GetId 0}}{{if not .Ans.GetAnsBool}}checked{{end}}{{end}}>
+            <div class="mdc-radio__background">
+              <div class="mdc-radio__outer-circle"></div>
+              <div class="mdc-radio__inner-circle"></div>
+            </div>
+            <div class="mdc-radio__ripple"></div>
+          </div>
+          <label for="ans-bool-false">False</label>
+        </div>
+      </div>
+    </div>
+
+    {{else if eq .Qn.GetType.Number 5}} {{/* MCQ */}}
+      {{range $i, $e := .Qn.GetChoices}}
+      <div class="mdc-layout-grid__inner">
+        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+          <div class="mdc-form-field">
+            <div class="mdc-radio">
+              <input class="mdc-radio__native-control" type="radio" id="ans-mcq-{{$i}}" name="ans-mcq" 
+                  value="{{$i}}" {{if ne $.Ans.GetId 0}}{{if eq $i $.Ans.GetAnsChoiceIndex}}checked{{end}}{{end}}>
+              <div class="mdc-radio__background">
+                <div class="mdc-radio__outer-circle"></div>
+                <div class="mdc-radio__inner-circle"></div>
+              </div>
+              <div class="mdc-radio__ripple"></div>
+            </div>
+            <label for="ans-mcq-{{$i}}">{{$e.GetHtmlBody}}</label>
+          </div>
+        </div>
+      </div>
+      {{end}}
+    {{end}}
+
+    </div>
+  </div>
+  <div class="mdc-layout-grid__inner">
+    <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
+      <div class="mdc-touch-target-wrapper">
+        <button class="mdc-button mdc-button--raised mdc-button--touch" id="submitans" type="button">
+          <div class="mdc-button__ripple"></div>
+          <span class="mdc-button__label">Submit Answer</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+
+   
+  </form>
+
+  <div id="info"></div>
+
+<script>
+  window.onload = function () {
+    document.getElementById('submitans').addEventListener('click', submitansClick);
+    setupMaterial();
+    window.setTimeout(updateOnStatus, 700);
+  }
+
+  function submitansClick(e) {
+    const formElement = document.getElementById('ansform');
+    const infoElement = document.getElementById('info');
+    const data = new URLSearchParams(new FormData(formElement));
+
+    posty('/api/participant/submit-answer', data)
+    .then(response => { return response.json(); })
+    .then(myBlob => {
+      document.getElementById('ans-id').value = myBlob;
+      info.innerHTML = "Saved.";
+    })
+    .catch(showError);
+  }
+
+  var currentTimeout = 700;
+  async function updateOnStatus() {
+    const qzid = parseInt(document.getElementById('qz-id').value);
+    const qnid = parseInt(document.getElementById('qn-id').value)
+    const sbtn = document.getElementById('submitans');
+    const info = document.getElementById('info');
+    let success = false;
+    await getty('/api/participant/quiz/' + qzid + '/getstatus')
+    .then(r => { return r.json(); })
+    .then(j => {
+      success = true;
+      if (j && j.QuestionID && (j.QuestionID != qnid)) {
+        location.reload();
+        return;
+      }
+      if (j && j.hasOwnProperty('AcceptingResponses')) {
+        sbtn.disabled = !j.AcceptingResponses;
+      }
+    })
+    .catch(showError);
+
+    if (success) {
+      currentTimeout = 700;
+    } else {
+      currentTimeout = Math.floor(1.3 * currentTimeout);
+      if (currentTimeout > 3000) {
+        info.innerHTML = "Something went wrong, we can't contact the server. Reloading the page."
+        location.reload();
+        return;
+      }
+    }
+    window.setTimeout(updateOnStatus, currentTimeout);
+  }
+</script>
+</body>

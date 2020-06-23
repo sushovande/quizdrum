@@ -1,0 +1,130 @@
+/**
+ * Copyright 2020 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+body {
+  --mdc-theme-primary: #E34700;
+  --mdc-theme-secondary: #FF9D0D;
+  --mdc-theme-on-primary: #F4F4F4;
+  --mdc-theme-on-secondary: #070707;
+  --mdc-typography-font-family: Lato, sans-serif;
+  --mdc-typography-headline1-font-family: Calistoga, serif;
+  --mdc-typography-headline2-font-family: Calistoga, serif;
+  --mdc-typography-headline3-font-family: Calistoga, serif;
+  --mdc-typography-headline4-font-family: Calistoga, serif;
+  --mdc-typography-headline5-font-family: Calistoga, serif;
+  --mdc-typography-headline6-font-family: Calistoga, serif;
+  margin: 0;
+  padding: 0;
+}
+.switch {
+  --mdc-theme-secondary: #E34700;
+  --mdc-theme-primary: #FF9D0D;
+  --mdc-theme-on-secondary: #F4F4F4;
+  --mdc-theme-on-primary: #070707;
+}
+.mdc-list-item__meta .mdc-touch-target-wrapper {
+  margin-left: 1em;
+}
+.first-header {
+  margin-top: 80px;
+}
+.new-quiz-title, .longish-textbox {
+  width: 360px;
+  margin-bottom: 1.5em;
+}
+.quiz-list-descr {
+  max-width: 450px;
+}
+#loginbtn {
+  margin-left: 1em;
+}
+.app-bar-title-link {
+  color: var(--mdc-theme-on-primary, #fff);
+  text-decoration: none;
+}
+.mdc-data-table__header-cell {
+  font-weight: bold;
+}
+.quiz-line {
+  border-radius: 4px;
+  padding: 20px;
+}
+.quiz-line:hover {
+  background-color: #eee;
+}
+.ans-card {
+  height: 10em;
+  padding: 1em;
+}
+.custom-score {
+  width: 30px;
+}
+.anstime {
+  margin-bottom: 10px;
+}
+.question-pane {
+  background-color: #f5f5f5;
+}
+.question-container {
+  border-bottom: 1px solid #fff;
+  border-top: 1px solid #ccc;
+  border-left: 1px solid #eaeaea;
+  height: 56px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+.question-container:hover {
+  background-color: #e4e4e4;
+}
+.question-arrow-container {
+  display: flex;
+  height: 56px;
+  align-items: center;
+}
+.question-title {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.question-subtitle {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.question-spacer {
+  background-color: #fff;
+  height: 40px;
+  border-top: 1px solid #ccc;
+  margin-left: -3px;
+}
+.breather-on-top {
+  margin-top: 15px;
+}
+#guestloginbtn {
+  width: 240px;
+  height: 50px;
+  margin-top: 24px;
+}
+.abcRioButton.abcRioButtonBlue {
+  border-radius: 5px;
+}
+.abcRioButtonBlue .abcRioButtonIcon {
+  /* we need the !important here to override the style tag in the iframe */
+  border-radius: 5px !important;
+}
+.anstime {
+  color: #666;
+}

@@ -1,0 +1,109 @@
+// Copyright 2020 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Protos related to a user of the site, whether Google login or Guest.
+syntax = "proto2";
+package model;
+option go_package = "quizdrum/model";
+
+// A user of this site. If the user used Google login, the google_user
+// field will be populated.
+message User {
+  // The ID as stored in the local database.
+  optional int64 id = 1;
+  // Data obtained from Google OAuth.
+  optional GUser google_user = 2;
+}
+
+// A Google user, based on OpenIDConnect
+// https://developers.google.com/identity/protocols/OpenIDConnect
+message GUser {
+  // REQUIRED. Who issued this token. Usually "accounts.google.com"
+  optional string iss = 1;
+
+  // The client_id of the authorized presenter. This claim is only needed when
+  // the party requesting the ID token is not the same as the audience of the
+  // ID token. This may be the case at Google for hybrid apps where a web
+  // application and Android app have a different client_id but share the same
+  // project.
+  optional string azp = 2;
+
+  // REQUIRED. Identifies the audience that this ID token is intended for. It
+  // must be one of the OAuth 2.0 client IDs of your application.
+  optional string aud = 3;
+
+  // REQUIRED. An identifier for the user, unique among all Google accounts
+  // and never reused. A Google account can have multiple emails at different
+  // points in time, but the sub value is never changed. Use sub within your
+  // application as the unique-identifier key for the user. An integer,
+  // sometimes larger than int64.
+  optional string sub = 4;
+
+  // The user's email address. This may not be unique and is not suitable for
+  // use as a primary key. Provided only if your scope included the string
+  // "email".
+  optional string email = 5;
+
+  // True if the user's e-mail address has been verified; otherwise false.
+  optional bool email_verified = 6;
+
+  // Access token hash. Provides validation that the access token is tied to
+  // the identity token. If the ID token is issued with an access token in the
+  // server flow, this is always included. This can be used as an alternate
+  // mechanism to protect against cross-site request forgery attacks.
+  optional string at_hash = 7;
+
+  // The user's full name, in a displayable form. When name claims are
+  // present, you can use them to update your app's user records. Note that
+  // this claim is never guaranteed to be present.
+  optional string name = 8;
+
+  // The URL of the user's profile picture.
+  optional string picture = 9;
+
+  // The given name of the user.
+  optional string given_name = 10;
+
+  // The family name of the user.
+  optional string family_name = 11;
+
+  // The user's locale, like "en"
+  optional string locale = 12;
+
+  // REQUIRED. The time the ID token was issued, represented in Unix time
+  // (integer seconds).
+  optional int64 iat = 13;
+
+  // REQUIRED. The time the ID token expires, represented in Unix time
+  // (integer seconds).
+  optional int64 exp = 14;
+
+  // Not known
+  optional string jti = 15;
+
+  // The hosted G Suite domain of the user. Provided only if the user belongs
+  // to a hosted domain.
+  optional string hd = 16;
+}
+
+// Represents the type of access that can be granted to the given
+// user, entity pair
+message AccessType {
+  // Should the user be allowed to read the entity.
+  // In the case of a quiz, this allows them to participate.
+  optional bool read_allowed = 1;
+  // Should the user be allowed to write to this entity.
+  // In the case of a quiz, this allows them to modify questions and act as a quizmaster.
+  optional bool write_allowed = 2;
+}

@@ -1,0 +1,59 @@
+<!--
+ Copyright 2020 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<div class="mdc-layout-grid__inner">
+
+
+{{range .}}
+<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
+  <div class="mdc-card ans-card">
+    <div>
+      <div class="respondent mdc-typography--headline6">Answer by {{.SolverProfileName}}</div>
+      <div class="anstime mdc-typography--subtitle2" data-timestamp="{{.ResponseTimeS}}">Submitted at {{.ResponseTimeS}}</div>
+      <div class="anscontent mdc-typography--body1">{{.AnswerDisplayText}}</div>
+    </div>
+
+    <div class="mdc-card__actions">
+      <div class="mdc-typography--body1">
+
+
+  Points: 
+  <input type="radio" id="ans-{{.AnswerID}}-score-0" name="ans-{{.AnswerID}}-score" value="0"
+     oninput="scoreChanged(this);" {{if eq .PointsAwarded 0}}checked{{end}}>
+  <label for="ans-{{.AnswerID}}-score-0">0</label>
+  
+  <input type="radio" id="ans-{{.AnswerID}}-score-5" name="ans-{{.AnswerID}}-score" value="5"
+     oninput="scoreChanged(this);" {{if eq .PointsAwarded 5}}checked{{end}}>
+  <label for="ans-{{.AnswerID}}-score-5">5</label>
+
+  <input type="radio" id="ans-{{.AnswerID}}-score-10" name="ans-{{.AnswerID}}-score" value="10"
+     oninput="scoreChanged(this);" {{if eq .PointsAwarded 10}}checked{{end}}>
+  <label for="ans-{{.AnswerID}}-score-10">10</label>
+
+  <input type="radio" id="ans-{{.AnswerID}}-score-custom" name="ans-{{.AnswerID}}-score" value="custom"
+     oninput="scoreChanged(this);" {{if .CustomPointsAwarded}}checked{{end}}>
+  <label for="ans-{{.AnswerID}}-score-custom">Custom: </label>
+  <input type="text" id="ans-{{.AnswerID}}-custom-score" name="ans-{{.AnswerID}}-custom-score" 
+    oninput="scoreChanged(this);" class="custom-score" {{if .CustomPointsAwarded}}value="{{.PointsAwarded}}"{{end}}>
+
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{{end}}
+</div>

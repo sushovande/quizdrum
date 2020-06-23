@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<!--
+ Copyright 2020 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<html lang="en">
+
+<head>
+  <title>Log in to QuizDrum</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-signin-client_id" content="{{.OAuthClientID}}">
+  <meta name="google" content="notranslate">
+  <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+  <script src="/static/game.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Calistoga&family=Lato:ital,wght@0,400;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+  <header class=" mdc-top-app-bar">
+    <div class="mdc-top-app-bar__row">
+      <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+        <a href="/" class="app-bar-title-link"><span class="mdc-top-app-bar__title">QuizDrum</span></a>
+      </section>
+    </div>
+  </header>
+
+  <div class="mdc-layout-grid" style="width: 50%">
+    <div class="mdc-layout-grid__inner">
+      <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+        <h2 class="mdc-typography--headline4 first-header">Log In:</h2>
+        <div id="my-signin2"></div>
+        
+        <div class="mdc-touch-target-wrapper">
+          <button class="mdc-button mdc-button--raised mdc-button--touch" id="guestloginbtn">
+            <div class="mdc-button__ripple"></div>
+            <span class="mdc-button__label">Login as Guest</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="mdc-layout-grid__inner">
+      <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+        <p class="mdc-typography--body1">Logging in as a guest allows you to participate in quizzes, 
+          but not conduct them.
+          Your login will work for up to a month on just this browser. Logging in with
+          Google allows you to act as a quizmaster, and also allows you to participate
+          across multiple devices.
+        </p>
+      </div>
+    </div>
+    <div class="mdc-layout-grid__inner">
+      <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+        <div id="info"></div>
+      </div>
+    </div>
+  </div>
+
+
+<script>
+  window.onload = function () {
+    document.getElementById('guestloginbtn').addEventListener('click', guestloginbtnClick);
+    setupMaterial();
+  }
+
+  function setupMaterial() {
+    for (let a of document.querySelectorAll('.mdc-button')) {
+      mdc.ripple.MDCRipple.attachTo(a);
+    }
+    for (let a of document.querySelectorAll('.mdc-text-field')) {
+      const textField = new mdc.textField.MDCTextField(a);
+    }
+  }
+
+  function guestloginbtnClick(e) {
+    const data = new URLSearchParams({});
+    const info = document.getElementById('info');
+
+    posty('/api/common/guest-login', data)
+    .then(response => { return response.json(); })
+    .then(j => {
+      info.innerHTML = "Logged in as guest " + j + ".";
+      redirectAsNeeded();
+    })
+    .catch(showError);
+  }
+
+  function redirectAsNeeded() {
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('continue')) {
+      window.location.href = urlParams.get("continue");
+    } else {
+      window.location.href = "/";
+    }
+  }
+
+  function googleJsFailure(o) {
+    document.getElementById('info').innerHTML = "Sign in with Google Failed." + o.error;
+  }
+
+  function googleJsSuccess(googleUser) {
+    const data = new URLSearchParams({'idtoken': googleUser.getAuthResponse().id_token});
+    postj('/api/common/oauth-login', data)
+    .then(j => {
+      info.innerHTML = "Logged in as a google user, with ID " + j + ".";
+      redirectAsNeeded();
+    })
+  }
+
+  function renderButton() {
+    gapi.signin2.render('my-signin2', {
+      'scope': 'profile email',
+      'width': 240,
+      'height': 50,
+      'longtitle': true,
+      'theme': 'dark',
+      'onsuccess': googleJsSuccess,
+      'onfailure': googleJsFailure
+    });
+  }
+</script>
+  <script src="https://apis.google.com/js/platform.js?onload=renderButton" async defer></script>
+
+</body>
+</html>

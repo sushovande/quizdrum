@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<!--
+ Copyright 2020 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<html lang="en">
+
+<head>
+  <title>Editing Quiz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google" content="notranslate">
+  <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+  <script src="/static/game.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Calistoga&family=Lato:ital,wght@0,400;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+  <header class=" mdc-top-app-bar">
+    <div class="mdc-top-app-bar__row">
+      <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+        <a href="/" class="app-bar-title-link"><span class="mdc-top-app-bar__title">QuizDrum</span></a> </section>
+      <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end">
+
+        {{if eq .U.GetId -1}}
+        <div class="mdc-touch-target-wrapper" id="loginbtn">
+          <a href="/login" class="mdc-button mdc-button--touch mdc-button--raised switch">
+            <div class="mdc-button__ripple"></div>
+            <span class="mdc-button__label">Log In</span>
+            <div class="mdc-button__touch"></div>
+          </a>
+        </div>
+
+        {{else if eq .U.GoogleUser.GetSub ""}}
+        <div class="mdc-chip mdc-menu-surface--anchor" role="row" id="user-chip">
+          <div class="mdc-chip__ripple"></div>
+          <i class="material-icons mdc-chip__icon mdc-chip__icon--leading">face</i>
+          <span role="gridcell">
+            <span role="button" tabindex="0" class="mdc-chip__primary-action">
+              <span class="mdc-chip__text">Guest {{.U.GetId}}</span>
+            </span>
+          </span>
+        </div>
+        <div class="mdc-touch-target-wrapper" id="loginbtn">
+          <a href="/logout" class="mdc-button mdc-button--touch mdc-button--raised switch">
+            <div class="mdc-button__ripple"></div>
+            <span class="mdc-button__label">Log Out</span>
+            <div class="mdc-button__touch"></div>
+          </a>
+        </div>
+
+        {{else}}
+        <div class="mdc-chip mdc-menu-surface--anchor" role="row" id="user-chip">
+          <div class="mdc-chip__ripple"></div>
+          <!-- TODO change this to the google profile picture -->
+          <i class="material-icons mdc-chip__icon mdc-chip__icon--leading">face</i>
+          <span role="gridcell">
+            <span role="button" tabindex="0" class="mdc-chip__primary-action">
+              <span class="mdc-chip__text">{{.U.GoogleUser.GetName}}</span>
+            </span>
+          </span>
+        </div>
+        <div class="mdc-touch-target-wrapper" id="loginbtn">
+          <a href="/logout" class="mdc-button mdc-button--touch mdc-button--raised switch">
+            <div class="mdc-button__ripple"></div>
+            <span class="mdc-button__label">Log Out</span>
+            <div class="mdc-button__touch"></div>
+          </a>
+        </div>
+        {{end}}
+
+      </section>
+    </div>
+  </header>
+
+
+
+<div class="mdc-layout-grid">
+  <div class="mdc-layout-grid__inner">
+    <div class="first-header"></div>
+  </div>
+  <div class="mdc-layout-grid__inner">
+    <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3 question-pane" id="qn-pane-parent">
+
+      <div class="mdc-layout-grid__inner question-container" onclick="quizClicked();">
+        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-10 question-text-container">
+          <div class="mdc-typography--headline6 question-title" title="{{.Q.GetTitle}}">{{.Q.GetTitle}}</div>
+          <div class="mdc-typography--body2 question-subtitle">Edit Quiz Properties.</div>
+        </div>
+        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-2 question-arrow-container">
+          <i class="material-icons question-arrow">double_arrow</i>
+        </div>
+      </div>
+
+
+      <div class="mdc-layout-grid__inner question-spacer">
+      </div>
+
+
+      {{range .Q.GetQuestions}}
+      <div class="mdc-layout-grid__inner question-container" data-qnid="{{.GetId}}" onclick="questionClicked(this);">
+        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-10 question-text-container">
+          <div class="mdc-typography--headline6 question-title" title="{{.GetTitle}}">{{.GetTitle}}</div>
+          <div class="mdc-typography--body2 question-subtitle" title="{{.GetHtmlBody}}">{{.GetHtmlBody}}</div>
+        </div>
+        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-2 question-arrow-container">
+          <i class="material-icons question-arrow">chevron_right</i>
+        </div>
+      </div>
+      {{end}}
+
+      <template id="qn-container-template">
+        <div class="mdc-layout-grid__inner question-container" onclick="questionClicked(this);">
+          <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-10 question-text-container">
+            <div class="mdc-typography--headline6 question-title" title=""></div>
+            <div class="mdc-typography--body2 question-subtitle" title=""></div>
+          </div>
+          <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-2 question-arrow-container">
+            <i class="material-icons question-arrow">chevron_right</i>
+          </div>
+        </div>
+      </template>
+
+      <div class="mdc-layout-grid__inner new-qn-btn-container">
+        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-10">
+          <div class="mdc-touch-target-wrapper">
+            <button id="addqn" class="mdc-button mdc-button--raised mdc-button--touch" type="button">
+              <div class="mdc-button__ripple"></div>
+              <span class="mdc-button__label">Add Another Question</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+
+    </div> <!-- end question-pane -->
+    <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-9 qm-edit-pane">
+
+
+      <!-- quiz editing panel -->
+      <div class="mdc-layout-grid__inner" style="display: none;" id="qzformpane">
+        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+          <form id="qz-form">
+            <input type="hidden" id="qz-id" name="qz-id" value="{{.Q.GetId}}">
+
+            <!-- QUIZ NAME -->
+            <div>
+              <label class="mdc-text-field mdc-text-field--filled longish-textbox">
+                <span class="mdc-text-field__ripple"></span>
+                <input class="mdc-text-field__input" type="text" aria-labelledby="qz-title-label" 
+                    id="qz-title" name="qz-title" value="{{.Q.GetTitle}}">
+                <span class="mdc-floating-label" id="qz-title-label">Quiz Name</span>
+                <span class="mdc-line-ripple"></span>
+              </label>
+            </div>
+
+            <!-- QUIZ DESCR -->
+            <div class="breather-on-top">
+              <label class="mdc-text-field mdc-text-field--textarea">
+                <textarea class="mdc-text-field__input" rows="3" cols="40" aria-labelledby="qz-descr-label" 
+                  id="qz-descr" name="qz-descr">{{.Q.GetHtmlDescription}}</textarea>
+                <span class="mdc-notched-outline">
+                  <span class="mdc-notched-outline__leading"></span>
+                  <span class="mdc-notched-outline__notch">
+                    <span class="mdc-floating-label" id="qz-descr-label">Body</span>
+                  </span>
+                  <span class="mdc-notched-outline__trailing"></span>
+                </span>
+              </label>
+            </div>
+
+            <div class="breather-on-top">
+              <div class="mdc-touch-target-wrapper">
+                <button id="btnqzupdate" class="mdc-button mdc-button--raised mdc-button--touch" type="button">
+                  <div class="mdc-button__ripple"></div>
+                  <span class="mdc-button__label" id="btnqzupdate-label">Update Quiz Properties</span>
+                </button>
+              </div>
+              <div class="mdc-touch-target-wrapper" id="btnqzdel-container">
+                <button id="btnqzdel" class="mdc-button mdc-button--touch" type="button">
+                  <div class="mdc-button__ripple"></div>
+                  <i class="material-icons mdc-button__icon" aria-hidden="true">delete</i>
+                  <span class="mdc-button__label" id="btnqzdel-label">Delete Quiz</span>
+                </button>
+              </div>
+              <div class="mdc-touch-target-wrapper" style="display: none;" id="btnqzundodel-container">
+                <button id="btnqzundodel" class="mdc-button mdc-button--touch" type="button">
+                  <div class="mdc-button__ripple"></div>
+                  <i class="material-icons mdc-button__icon" aria-hidden="true">undo</i>
+                  <span class="mdc-button__label" id="btnqzundodel-label">Undo Delete</span>
+                </button>
+              </div>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+
+      <!-- question editing panel -->
+      <div class="mdc-layout-grid__inner" style="display: block;" id="qnformpane">
+        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+
+          <form id="qn-new-form">
+            <input type="hidden" id="quiz-id" name="quiz-id" value="{{.Q.GetId}}">
+            <input type="hidden" id="qn-id" name="qn-id" value="">
+          
+            <!-- QUESTION NAME -->
+            <div>
+              <label class="mdc-text-field mdc-text-field--filled longish-textbox">
+                <span class="mdc-text-field__ripple"></span>
+                <input class="mdc-text-field__input" type="text" aria-labelledby="qn-title-label" id="qn-title" name="qn-title">
+                <span class="mdc-floating-label" id="qn-title-label">Title</span>
+                <span class="mdc-line-ripple"></span>
+              </label>
+            </div>
+          
+            <!-- QUESTION BODY -->
+            <div class="breather-on-top">
+              <label class="mdc-text-field mdc-text-field--textarea">
+                <textarea class="mdc-text-field__input" rows="3" cols="40" aria-labelledby="qn-body-label" id="qn-body"
+                  name="qn-body"></textarea>
+                <span class="mdc-notched-outline">
+                  <span class="mdc-notched-outline__leading"></span>
+                  <span class="mdc-notched-outline__notch">
+                    <span class="mdc-floating-label" id="qn-body-label">Body</span>
+                  </span>
+                  <span class="mdc-notched-outline__trailing"></span>
+                </span>
+              </label>
+            </div>
+          
+            <!-- QUESTION TYPE -->
+            <div class="breather-on-top">
+              <div class="mdc-form-field">
+                <div class="mdc-radio">
+                  <input class="mdc-radio__native-control" type="radio" id="qn-new-type-text" 
+                      name="qn-type" value="text" checked oninput="qnTypeChanged(this);">
+                  <div class="mdc-radio__background">
+                    <div class="mdc-radio__outer-circle"></div>
+                    <div class="mdc-radio__inner-circle"></div>
+                  </div>
+                  <div class="mdc-radio__ripple"></div>
+                </div>
+                <label for="qn-new-type-text">Short Text Answer</label>
+              </div>
+            </div>
+          
+            <div>
+              <div class="mdc-form-field">
+                <div class="mdc-radio">
+                  <input class="mdc-radio__native-control" type="radio" id="qn-new-type-int"
+                      name="qn-type" value="int" oninput="qnTypeChanged(this);">
+                  <div class="mdc-radio__background">
+                    <div class="mdc-radio__outer-circle"></div>
+                    <div class="mdc-radio__inner-circle"></div>
+                  </div>
+                  <div class="mdc-radio__ripple"></div>
+                </div>
+                <label for="qn-new-type-int">Integer Answer</label>
+              </div>
+            </div>
+          
+            <div>
+              <div class="mdc-form-field">
+                <div class="mdc-radio">
+                  <input class="mdc-radio__native-control" type="radio" id="qn-new-type-bool"
+                      name="qn-type" value="bool" oninput="qnTypeChanged(this);">
+                  <div class="mdc-radio__background">
+                    <div class="mdc-radio__outer-circle"></div>
+                    <div class="mdc-radio__inner-circle"></div>
+                  </div>
+                  <div class="mdc-radio__ripple"></div>
+                </div>
+                <label for="qn-new-type-bool">True or False Answer</label>
+              </div>
+            </div>
+          
+            <div>
+              <div class="mdc-form-field">
+                <div class="mdc-radio">
+                  <input class="mdc-radio__native-control" type="radio" id="qn-new-type-mcq"
+                      name="qn-type" value="mcq" oninput="qnTypeChanged(this);">
+                  <div class="mdc-radio__background">
+                    <div class="mdc-radio__outer-circle"></div>
+                    <div class="mdc-radio__inner-circle"></div>
+                  </div>
+                  <div class="mdc-radio__ripple"></div>
+                </div>
+                <label for="qn-new-type-mcq">Multiple Choice Answer</label>
+              </div>
+            </div>
+          
+            <div>
+              <div class="mdc-form-field">
+                <div class="mdc-radio">
+                  <input class="mdc-radio__native-control" type="radio" id="qn-new-type-float"
+                      name="qn-type" value="float" oninput="qnTypeChanged(this);">
+                  <div class="mdc-radio__background">
+                    <div class="mdc-radio__outer-circle"></div>
+                    <div class="mdc-radio__inner-circle"></div>
+                  </div>
+                  <div class="mdc-radio__ripple"></div>
+                </div>
+                <label for="qn-new-type-float">Approximate Decimal Point Answer</label>
+              </div>
+            </div>
+          
+            <div id="mcq-author-container" class="mdc-typography--body1 breather-on-top">
+              For multiple choice questions only, set the options:
+              <div id="mcq-author">
+                <div id="mcq-option-1">
+                  <strong>Option 1:</strong>
+                  <input type="text" id="mcq-inp-1" name="mcq-opt" oninput="textinput(this)">
+                  <button type="button" id="mcq-btn-1" onclick="removerow(this)">❌</button>
+                </div>
+              </div>
+              <template id="mcq-template">
+                <div>
+                  <strong>Option x:</strong>
+                  <input type="text" name="mcq-opt" oninput="textinput(this)">
+                  <button type="button" onclick="removerow(this)">❌</button>
+                </div>
+              </template>
+            </div>
+            <div class="breather-on-top">
+              <div class="mdc-touch-target-wrapper">
+                <button id="btncrt" class="mdc-button mdc-button--raised mdc-button--touch" type="button">
+                  <div class="mdc-button__ripple"></div>
+                  <span class="mdc-button__label" id="btncrt-label">Add Question</span>
+                </button>
+              </div>
+              <div class="mdc-touch-target-wrapper">
+              <button id="btndel" class="mdc-button mdc-button--touch" type="button">
+                <div class="mdc-button__ripple"></div>
+                <i class="material-icons mdc-button__icon" aria-hidden="true">delete</i>
+                <span class="mdc-button__label" id="btndel-label">Delete Question</span>
+              </button>
+              </div>
+            </div>
+          </form>
+
+
+        </div> <!-- end edit pane layout span 12 -->
+      </div> <!-- end edit pane layout grid inner -->
+      <div id="info"></div>
+    </div> <!-- end qm edit pane -->
+  </div> <!-- end outermost mdc-layout-grid__inner -->
+</div> <!-- end outermost mdc-layout-grid -->
+
+
+
+
+<script>
+  window.onload = function () {
+    setupMaterial();
+    document.getElementById('btncrt').addEventListener('click', btncrtClick);
+    document.getElementById('addqn').addEventListener('click', addqnClick);
+    document.getElementById('btndel').addEventListener('click', delbtnClick);
+    document.getElementById('btnqzupdate').addEventListener('click', btnqzupdateClick);
+    document.getElementById('btnqzdel').addEventListener('click', btnqzdelClick);
+    document.getElementById('btnqzundodel').addEventListener('click', btnqzundodelClick);
+    resetForm();
+  }
+
+  function btncrtClick(e) {
+    const formElement = document.getElementById('qn-new-form');
+    const infoElement = document.getElementById('info');
+    const data = new URLSearchParams(new FormData(formElement));
+
+    const existingQnId = document.getElementById('qn-id').value
+    if (existingQnId == '') {
+      posty('/api/quizmaster/question/new', data)
+      .then(r => { return r.json(); })
+      .then(j => {
+        info.innerHTML = "Saved.";
+        addQuestionWithId(j);
+        resetForm();
+      })
+      .catch(showError);
+    } else {
+      putt('/api/quizmaster/question/' + existingQnId + '/update', data)
+      .then(j => {
+        info.innerHTML = "Saved.";
+        const ctr = findQnContainerWithId(existingQnId);
+        if (ctr) {
+          ctr.querySelector('.question-title').innerHTML = data.get("qn-title");
+          ctr.querySelector('.question-title').title = data.get("qn-title");
+          ctr.querySelector('.question-subtitle').innerHTML = data.get("qn-body");
+          ctr.querySelector('.question-subtitle').title = data.get("qn-body"); 
+        }
+      });
+    }
+  }
+
+  function addQuestionWithId(id) {
+    const tmplElem = document.getElementById('qn-container-template');
+    const newQnElem = tmplElem.content.cloneNode(true);
+    const qnContainerElem = newQnElem.querySelector('.question-container');
+    qnContainerElem.dataset['qnid'] = id;
+
+    const titleElem = newQnElem.querySelector('.question-title');
+    const titleValue = document.getElementById('qn-title').value;
+    titleElem.innerHTML = titleValue;
+    titleElem.title = titleValue;
+
+    const descrElem = newQnElem.querySelector('.question-subtitle');
+    const bodyValue = document.getElementById('qn-body').value;
+    descrElem.innerHTML = bodyValue;
+    descrElem.title = bodyValue;
+
+    const parentElem = document.getElementById('qn-pane-parent');
+    parentElem.insertBefore(newQnElem, tmplElem);
+  }
+
+  function questionClicked(e) {
+    switchToQuestionPane();
+    if (!e.dataset.qnid) {
+      document.getElementById('info').innerHTML = "Could not figure out the question ID you wanted.";
+      return;
+    }
+    getj('/api/quizmaster/question/' + e.dataset.qnid)
+      .then(j => {
+        populateQuestionForm(j);
+      })
+  }
+
+  function addqnClick(e) {
+    switchToQuestionPane();
+    resetForm();
+    document.getElementById('btncrt-label').innerHTML = 'Add Question';
+  }
+
+  function delbtnClick(e) {
+    const qnid = document.getElementById('qn-id').value;
+    let container = findQnContainerWithId(qnid);
+
+    deletet('/api/quizmaster/question/' + qnid + '/delete')
+    .then(t => {
+      if (container) {
+        container.remove();
+      }
+      resetForm();
+    })
+  }
+
+  function populateQuestionForm(j) {
+    /*
+    Note: j is of the form
+    {"id":"13","quizId":"7","title":"Question 1","htmlBody":
+    "What is the correct number of sds.","type":"MULTIPLE_CHOICE_ANSWER",
+    "choices":[{"htmlBody":"sd1"},{"htmlBody":"sd2"},{"htmlBody":"sd3"}]}
+    */
+    let e = new Event('input', { bubbles: true, cancelable: true });
+    document.getElementById('qn-id').value = j.id;
+    document.getElementById('quiz-id').value = j.quizId;
+    document.getElementById('qn-title').value = j.title;
+    document.getElementById('qn-title').dispatchEvent(e);
+    document.getElementById('qn-body').value = j.htmlBody;
+    document.getElementById('qn-body').dispatchEvent(e);
+
+    let tp = document.getElementById('qn-new-type-text');
+    switch (j.type) {
+      case "TEXT_ANSWER":
+        tp = document.getElementById('qn-new-type-text');
+        break;
+      case "INT64_ANSWER":
+        tp = document.getElementById('qn-new-type-int');
+        break;
+      case "FLOAT_ANSWER":
+        tp = document.getElementById('qn-new-type-float');
+        break;
+      case "BOOL_ANSWER":
+        tp = document.getElementById('qn-new-type-bool');
+        break;
+      case "MULTIPLE_CHOICE_ANSWER":
+        tp = document.getElementById('qn-new-type-mcq');
+        break;
+      default:
+        document.getElementById('info').innerHTML = "Got a weird question type";
+        break;
+    }
+    tp.checked = true;
+    tp.dispatchEvent(e);
+
+    removeAllMcqRows();
+    if (j.choices && j.type == "MULTIPLE_CHOICE_ANSWER") {
+      for (let i = 0; i < j.choices.length; i++) {
+        if (i == 0) {
+          document.getElementById('mcq-inp-1').value = j.choices[0].htmlBody;
+        } else {
+          addMcqRowWithText(j.choices[i].htmlBody);
+        }
+      }
+    }
+    document.getElementById('btncrt-label').innerHTML = "Update Question";
+    document.getElementById('btndel').disabled = false;
+  }
+
+  function resetForm() {
+    document.getElementById('qn-id').value = '';
+    document.getElementById('qn-title').value = '';
+    document.getElementById('qn-body').value = '';
+    document.getElementById('qn-new-type-text').checked = true;
+    removeAllMcqRows();
+    qnTypeChanged(document.getElementById('qn-new-type-text'));
+    let e = new Event('blur', { bubbles: true, cancelable: true });
+    document.getElementById('qn-title').dispatchEvent(e);
+    document.getElementById('qn-body').dispatchEvent(e);
+    document.getElementById('btndel').disabled = true;
+  }
+
+  function textinput(e) {
+    const indexOfTypedInput = parseInt(e.id.substring(8)) - 1;
+    const ma = document.getElementById("mcq-author");
+    if (indexOfTypedInput < ma.children.length - 1) {
+      // this is not the last element
+      return;
+    }
+    addMcqRowWithText('');
+  }
+
+  function addMcqRowWithText(txt) {
+    const ma = document.getElementById("mcq-author");
+    const template = document.getElementById('mcq-template');
+    let clone = template.content.cloneNode(true);
+    const idx = ma.children.length + 1;
+    clone.firstElementChild.id = 'mcq-option-' + idx;
+    clone.querySelector('strong').innerHTML = 'Option ' + idx + ':';
+    clone.querySelector('input').id = 'mcq-inp-' + idx;
+    clone.querySelector('input').value = txt;
+    clone.querySelector('button').id = 'mcq-btn-' + idx;
+    ma.appendChild(clone);
+  }
+
+  function removeAllMcqRows() {
+    document.getElementById('mcq-inp-1').value = "";
+    const ma = document.getElementById("mcq-author");
+    // We have to loop from the bottom up, otherwise the textinput event will fire
+    // and add more items (i think).
+    for (let i = ma.children.length; i > 1; i--) {
+      document.getElementById('mcq-option-' + i).remove();
+    }
+  }
+
+  function removerow(e) {
+    // We're calling this 'ordinal' because it is 1-based
+    const ordinalClicked = parseInt(e.id.substring(8));
+    const ma = document.getElementById("mcq-author");
+    if (ma.children.length == 1) {
+      // clicked the only item, just clear the input
+      document.getElementById('mcq-inp-1').value = "";
+      return;
+    }
+    // Collect the list of strings
+    szMcqTexts = [];
+    for (let i = ordinalClicked + 1; i <= ma.children.length; i++) {
+      szMcqTexts.push(document.getElementById('mcq-inp-' + i).value);
+    }
+    for (let i = 0; i < szMcqTexts.length; i++) {
+      document.getElementById('mcq-inp-' + (ordinalClicked + i)).value = szMcqTexts[i];
+    }
+    document.getElementById('mcq-option-' + ma.children.length).remove();
+  }
+
+  function qnTypeChanged(e) {
+    const mcqOption = document.getElementById('qn-new-type-mcq');
+    const authorDiv = document.getElementById('mcq-author-container');
+    if (mcqOption.checked) {
+      authorDiv.style.display = 'block';
+    } else {
+      authorDiv.style.display = 'none';
+    }
+  }
+
+  function findQnContainerWithId(qnid) {
+    for (let e of document.querySelectorAll('.question-container')) {
+      if (e.dataset.qnid && e.dataset.qnid == qnid) {
+        return e;
+      }
+    }
+  }
+
+  function switchToQuestionPane() {
+    document.getElementById('qzformpane').style.display = 'none';
+    document.getElementById('qnformpane').style.display = 'block';
+  }
+
+  function switchToQuizPane() {
+    document.getElementById('qnformpane').style.display = 'none';
+    document.getElementById('qzformpane').style.display = 'block';
+  }
+
+  function quizClicked() {
+    switchToQuizPane();
+  }
+
+  function btnqzupdateClick(e) {
+    const data = new URLSearchParams(new FormData(document.getElementById('qz-form')));
+    const qzid = parseInt(document.getElementById('qz-id').value);
+    putt('/api/quizmaster/quiz/' + qzid + '/updateproperties', data)
+    .then(j => { document.getElementById('info').innerHTML = "Updated Quiz."; })
+  }
+
+  function btnqzdelClick(e) {
+    const qzid = parseInt(document.getElementById('qz-id').value);
+    deletet('/api/quizmaster/quiz/' + qzid + '/delete')
+      .then(t => { 
+        document.getElementById('info').innerHTML = "Deleted Quiz."; 
+        document.getElementById('btnqzdel-container').style.display = 'none'
+        document.getElementById('btnqzundodel-container').style.display = 'inline'
+      })
+  }
+
+  function btnqzundodelClick(e) {
+    const data = new URLSearchParams({});
+    const qzid = parseInt(document.getElementById('qz-id').value);
+    putj('/api/quizmaster/quiz/' + qzid + '/reinstate', data)
+      .then(t => { 
+        document.getElementById('info').innerHTML = "Reinstated Quiz."; 
+        document.getElementById('btnqzundodel-container').style.display = 'none'
+        document.getElementById('btnqzdel-container').style.display = 'inline'
+      })
+  }
+</script>
+</body>
+</html>

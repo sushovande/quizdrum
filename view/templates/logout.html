@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<!--
+ Copyright 2020 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<html lang="en">
+
+<head>
+  <title>Log in to QuizDrum</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-signin-client_id" content="{{.OAuthClientID}}">
+</head>
+
+<body>
+
+<p>You have been signed out. Pay no attention to the sign in button below.</p>
+<p>You will be redirected home momentarily.</p>
+<p>If you are impatient, you may click here to go home: <a href="/">Go Home.</a></p>
+
+<div class="g-signin2" data-onsuccess="onSignIn"></div>
+
+<div id="info"></div>
+<script>
+  window.onload = function() {
+    window.setTimeout(quizdrumSignOut, 1000);
+  };
+
+  function onSignIn() {
+    console.log('user signed in, but this is the log out page, so we ignore it.')
+  }
+
+  function quizdrumSignOut() {
+    // in case the signout fails for whatever reason, we still want 
+    // to go home, cookies have been deleted.
+    window.setTimeout(goHome, 3000);
+    var auth2 = gapi.auth2.getAuthInstance();
+    auth2.signOut().then(function () {
+      console.log('User signed out.');
+      goHome();
+    });
+  }
+
+  function goHome() {
+    window.location.href = '/';
+  }
+</script>
+  <script src="https://apis.google.com/js/platform.js?onload=quizdrumSignOut" async defer></script>
+
+</body>
+</html>
