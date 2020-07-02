@@ -23,6 +23,7 @@
   <meta name="google" content="notranslate">
   <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
   <script src="/static/game.js"></script>
+  <script src="/static/participant.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <link rel="stylesheet"
@@ -162,20 +163,6 @@
   window.onload = function () {
     document.getElementById('btnset').addEventListener('click', btncrtClick);
     setupMaterial();
-  }
-
-  function btncrtClick(e) {
-    const formElement = document.getElementById('form-set-profile');
-    const infoElement = document.getElementById('info');
-    const data = new URLSearchParams(new FormData(formElement));
-
-    posty('/api/participant/set-profile', data)
-    .then(response => { return response.blob();  })
-    .then(myBlob => {
-      info.innerHTML = "Saved.";
-      window.location.href = "/participant/quiz/{{.Q.GetId}}/live";
-    })
-    .catch(showError);
   }
 </script>
 </body>

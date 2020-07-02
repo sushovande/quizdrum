@@ -23,6 +23,7 @@
   <meta name="google" content="notranslate">
   <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
   <script src="/static/game.js"></script>
+  <script src="/static/quizmaster.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <link rel="stylesheet"
@@ -289,135 +290,6 @@
     window.setTimeout(btn_refreshansClick, currentTimeout, {});
   }
 
-  function btn_nextqClick(e) {
-    const curId = parseInt(document.getElementById('qn-id').value);
-    const qnIndex = allQuestionIds.indexOf(curId);
-    const nextIndex = qnIndex + 1;
-    sendCurrentQuestion(nextIndex);
-  }
-
-  function btn_prevqClick(e) {
-    const curId = parseInt(document.getElementById('qn-id').value);
-    const qnIndex = allQuestionIds.indexOf(curId);
-    const nextIndex = qnIndex - 1;
-    sendCurrentQuestion(nextIndex);
-  }
-  
-  function sendCurrentQuestion(nextIndex) {
-    const qzId = parseInt(document.getElementById('qz-id').value);
-    const info = document.getElementById('info');
-    if (nextIndex >= allQuestionIds.length || nextIndex < 0) {
-      // handle scorecard instead
-    } else {
-      const data = new URLSearchParams({});
-      posty('/api/quizmaster/quiz/' + qzId + '/setactive/' + allQuestionIds[nextIndex], data)
-      .then( r => { return r.blob(); })
-      .then(myBlob => {
-        info.innerHTML = "Next ID has been marked as active. Refresh the page now.";
-        location.reload();
-      })
-      .catch(showError);
-    }
-  }
-
-  async function btn_refreshansClick(e) {
-    const curId = parseInt(document.getElementById('qn-id').value);
-    const info = document.getElementById('info');
-    let success = false;
-    await getty('/api/quizmaster/question/' + curId + '/getallanswers')
-    .then(r => { return r.text(); })
-    .then(myText => {
-      document.getElementById('answercontainer').innerHTML = myText;
-      qmAnsTimestampReplace();
-      repopulateSavedScores();
-      success = true;
-    })
-    .catch(showError);
-
-    if (success) {
-      currentTimeout = 1100;
-    } else {
-      currentTimeout = Math.floor(1.3 * currentTimeout);
-      if (currentTimeout > 3000) {
-        currentTimeout = 3000;
-        document.getElementById('info').textContent = 'Something\'s wrong. Can\'t seem to fetch answers from the server';
-      }
-    }
-    if (keepRefreshingScores) {
-      window.setTimeout(btn_refreshansClick, currentTimeout, {});
-    }
-  }
-
-  function btn_btnscoreClick(e) {
-    const curId = parseInt(document.getElementById('qn-id').value);
-    const info = document.getElementById('info');
-    const formElement = document.getElementById('scoringform');
-    const data = new URLSearchParams(new FormData(formElement));
-    posty('/api/quizmaster/question/' + curId + '/savescores', data)
-    .then( r=> { return r.text(); })
-    .then( t => {
-      info.innerHTML = "Scores Saved.";
-    })
-    .catch(showError);
-  }
-
-  function btn_stopansClick(e) {
-    const qzId = parseInt(document.getElementById('qz-id').value);
-    const btnStopAns = document.getElementById('stopans');
-    const stopAnsLabel = document.getElementById('stopanslabel');
-    const info = document.getElementById('info');
-    const data = new URLSearchParams();
-    let ar = false;
-
-    if (stopAnsLabel.innerHTML == "Stop Accepting Responses") {
-      data.append("ar", "false");
-    } else {
-      data.append("ar", "true");
-      ar = true;
-    }
-    
-    posty('/api/quizmaster/quiz/' + qzId + '/setacceptingresponses', data)
-    .then( r=> { return r.text(); })
-    .then( t => {
-      if (ar) {
-        stopAnsLabel.innerHTML = "Stop Accepting Responses";
-        keepRefreshingScores = true;
-      } else {
-        stopAnsLabel.innerHTML = "Accept Responses Again";
-        keepRefreshingScores = false;
-      }
-      btn_refreshansClick({});
-    })
-    .catch(showError);
-  }
-
-  var savedScores;
-  function scoreChanged(e) {
-    const formElement = document.getElementById('scoringform');
-    savedScores = new FormData(formElement);
-  }
-
-  function repopulateSavedScores() {
-    if (!savedScores) {
-      return;
-    }
-    for (let kvpair of savedScores) {
-      const k = kvpair[0];
-      const v = kvpair[1];
-      // We get two types of keys here: ans-<ans_id>-score, and ans-<ans_id>-custom-score.
-      if (k.endsWith('-custom-score')) {
-        const textElem = document.getElementById(k);
-        if (textElem) {
-          textElem.value = v;
-        }
-        continue;
-      }
-      let formElem = document.getElementById(k + '-' + v);
-      if (formElem) {
-        formElem.checked = true;
-      }
-    }
-  }
 </script>
 
 </body>
