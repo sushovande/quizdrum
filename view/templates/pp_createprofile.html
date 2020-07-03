@@ -112,7 +112,7 @@
     </div>
   </header>
 
-  <form id="form-set-profile">
+  <form id="form-set-profile" data-quizid="{{.Q.GetId}}">
   <div class="mdc-layout-grid">
     <div class="mdc-layout-grid__inner">
       <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-6">
@@ -142,7 +142,7 @@
     <div class="mdc-layout-grid__inner">
       <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-6">
         <div class="mdc-touch-target-wrapper">
-          <button class="mdc-button mdc-button--raised mdc-button--touch" id="btnset" type="button">
+          <button class="mdc-button mdc-button--raised mdc-button--touch" id="btnset" type="submit">
             <div class="mdc-button__ripple"></div>
             <span class="mdc-button__label">Register</span>
           </button>
@@ -155,13 +155,14 @@
       </div>
     </div>
   </div>
-
+  </form>
 
 
 
 <script>
+  var quizID = document.getElementById('form-set-profile').dataset['quizid'];
   window.onload = function () {
-    document.getElementById('btnset').addEventListener('click', btncrtClick);
+    document.getElementById('form-set-profile').addEventListener('submit', participantRegister)
     setupMaterial();
   }
 </script>

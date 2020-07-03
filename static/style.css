@@ -128,3 +128,16 @@ body {
 .anstime {
   color: #666;
 }
+.donecheck {
+  vertical-align: middle;
+  color: #4caf50;
+}
+.donecheck.showcheck{
+  visibility: visible;
+  opacity: 1;
+}
+.donecheck.hidecheck{
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s 2s, opacity 2s linear;
+}

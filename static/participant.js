@@ -14,18 +14,24 @@
  * limitations under the License.
  */
 
-function submitansClick(e) {
+function participantSubmitAnswer(e) {
+  e.preventDefault();
   const formElement = document.getElementById('ansform');
-  const infoElement = document.getElementById('info');
+  const checkElement = document.querySelector('.donecheck');
   const data = new URLSearchParams(new FormData(formElement));
 
-  posty('/api/participant/submit-answer', data)
-    .then(response => { return response.json(); })
-    .then(myBlob => {
-      document.getElementById('ans-id').value = myBlob;
-      info.innerHTML = "Saved.";
-    })
-    .catch(showError);
+  postj('/api/participant/submit-answer', data)
+    .then(j => {
+      document.getElementById('ans-id').value = j;
+      if (checkElement.classList.contains('hidecheck')) {
+        checkElement.classList.replace('hidecheck', 'showcheck');
+      }
+      window.setTimeout(() => {
+        if (checkElement.classList.contains('showcheck')) {
+          checkElement.classList.replace('showcheck', 'hidecheck');
+        }
+      }, 2000);
+    });
 }
 
 async function updateOnStatus() {
@@ -34,8 +40,7 @@ async function updateOnStatus() {
   const sbtn = document.getElementById('submitans');
   const info = document.getElementById('info');
   let success = false;
-  await getty('/api/participant/quiz/' + qzid + '/getstatus')
-    .then(r => { return r.json(); })
+  await getj('/api/participant/quiz/' + qzid + '/getstatus')
     .then(j => {
       success = true;
       if (j && j.QuestionID && (j.QuestionID != qnid)) {
@@ -46,7 +51,7 @@ async function updateOnStatus() {
         sbtn.disabled = !j.AcceptingResponses;
       }
     })
-    .catch(showError);
+    .catch(_ => { /* error already handled, but we want to continue */});
 
   if (success) {
     currentTimeout = 700;
@@ -61,7 +66,8 @@ async function updateOnStatus() {
   window.setTimeout(updateOnStatus, currentTimeout);
 }
 
-function btncrtClick(e) {
+function participantRegister(e) {
+  e.preventDefault();
   const formElement = document.getElementById('form-set-profile');
   const infoElement = document.getElementById('info');
   const data = new URLSearchParams(new FormData(formElement));
@@ -69,8 +75,8 @@ function btncrtClick(e) {
   posty('/api/participant/set-profile', data)
     .then(response => { return response.blob(); })
     .then(myBlob => {
-      info.innerHTML = "Saved.";
-      window.location.href = "/participant/quiz/{{.Q.GetId}}/live";
+      info.innerHTML = 'Saved.';
+      window.location.href = '/participant/quiz/' + quizID + '/live';
     })
     .catch(showError);
 }

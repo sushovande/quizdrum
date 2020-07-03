@@ -207,16 +207,17 @@
   <div class="mdc-layout-grid__inner">
     <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
       <div class="mdc-touch-target-wrapper">
-        <button class="mdc-button mdc-button--raised mdc-button--touch" id="submitans" type="button">
+        <button class="mdc-button mdc-button--raised mdc-button--touch" id="submitans" type="submit">
           <div class="mdc-button__ripple"></div>
           <span class="mdc-button__label">Submit Answer</span>
         </button>
       </div>
+      <span style="display: inline-block; width: 2em;"></span>
+      <span class="mdc-typography--body1 donecheck hidecheck">
+        <i class="material-icons" style="vertical-align: text-bottom;">done</i> Saved
+      </span>
     </div>
   </div>
-
-
-
    
   </form>
 
@@ -224,7 +225,7 @@
 
 <script>
   window.onload = function () {
-    document.getElementById('submitans').addEventListener('click', submitansClick);
+    document.getElementById('ansform').addEventListener('submit', participantSubmitAnswer);
     setupMaterial();
     window.setTimeout(updateOnStatus, 700);
   }
