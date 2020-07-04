@@ -415,6 +415,8 @@ func getPrintableStringFromAnswer(ans *model.Answer) string {
 	switch ans.GetType() {
 	case model.AnswerType_TEXT_ANSWER:
 		return ans.GetAnsText()
+	case model.AnswerType_LONG_TEXT_ANSWER:
+		return ans.GetAnsLongtext()
 	case model.AnswerType_INT64_ANSWER:
 		return strconv.FormatInt(ans.GetAnsInt(), 10)
 	case model.AnswerType_FLOAT_ANSWER:

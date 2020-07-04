@@ -21,6 +21,8 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
+//go:generate protoc --go_out=. --go_opt=paths=source_relative *.proto
+
 // Persistence has all the methods needed to save and load state
 type Persistence struct {
 	db *gorm.DB

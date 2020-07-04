@@ -46,6 +46,8 @@ func GetQuestionFromPostBody(p url.Values) (*model.Question, error) {
 	switch p["qn-type"][0] {
 	case "text":
 		qn.Type = model.AnswerType_TEXT_ANSWER.Enum()
+	case "longtext":
+		qn.Type = model.AnswerType_LONG_TEXT_ANSWER.Enum()
 	case "int":
 		qn.Type = model.AnswerType_INT64_ANSWER.Enum()
 	case "bool":

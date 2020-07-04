@@ -115,6 +115,9 @@ function populateQuestionForm(j) {
     case "TEXT_ANSWER":
       tp = document.getElementById('qn-new-type-text');
       break;
+    case "LONG_TEXT_ANSWER":
+      tp = document.getElementById('qn-new-type-longtext');
+      break;
     case "INT64_ANSWER":
       tp = document.getElementById('qn-new-type-int');
       break;
@@ -321,11 +324,11 @@ async function btn_refreshansClick(e) {
     .catch(showError);
 
   if (success) {
-    currentTimeout = 1100;
+    currentTimeout = 3100;
   } else {
     currentTimeout = Math.floor(1.3 * currentTimeout);
-    if (currentTimeout > 3000) {
-      currentTimeout = 3000;
+    if (currentTimeout > 10000) {
+      currentTimeout = 10000;
       document.getElementById('info').textContent = 'Something\'s wrong. Can\'t seem to fetch answers from the server';
     }
   }
@@ -381,6 +384,10 @@ var savedScores;
 function scoreChanged(e) {
   const formElement = document.getElementById('scoringform');
   savedScores = new FormData(formElement);
+  if (e.id.endsWith('-score-custom')) {
+    const tElem = document.getElementById(e.id.replace('-score-custom', '-custom-score'));
+    tElem.focus();
+  }
 }
 
 function repopulateSavedScores() {

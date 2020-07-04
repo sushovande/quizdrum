@@ -145,6 +145,9 @@ func GetAnswerFromPostBody(p url.Values) (*model.Answer, error) {
 	if val, ok := p["ans-text"]; ok {
 		ans.AnsText = proto.String(val[0])
 		ans.Type = model.AnswerType_TEXT_ANSWER.Enum()
+	} else if val, ok := p["ans-longtext"]; ok {
+		ans.AnsLongtext = proto.String(val[0])
+		ans.Type = model.AnswerType_LONG_TEXT_ANSWER.Enum()
 	} else if val, ok := p["ans-int64"]; ok {
 		ansint, err := strconv.ParseInt(val[0], 10, 64)
 		if err != nil {

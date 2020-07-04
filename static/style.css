@@ -66,7 +66,7 @@ body {
   background-color: #eee;
 }
 .ans-card {
-  height: 10em;
+  min-height: 10em;
   padding: 1em;
 }
 .custom-score {

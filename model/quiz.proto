@@ -96,6 +96,7 @@ enum AnswerType {
   FLOAT_ANSWER = 3;
   BOOL_ANSWER = 4;
   MULTIPLE_CHOICE_ANSWER = 5;
+  LONG_TEXT_ANSWER = 6;
 }
 
 message Answer {
@@ -105,6 +106,7 @@ message Answer {
   optional AnswerType type = 4;
 
   optional string ans_text = 5;
+  optional string ans_longtext = 12;
   optional int64 ans_int = 6;
   optional float ans_float = 7;
   optional bool ans_bool = 8;

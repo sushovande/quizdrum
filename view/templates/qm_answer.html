@@ -46,7 +46,7 @@
   <input type="radio" id="ans-{{.AnswerID}}-score-custom" name="ans-{{.AnswerID}}-score" value="custom"
      oninput="scoreChanged(this);" {{if .CustomPointsAwarded}}checked{{end}}>
   <label for="ans-{{.AnswerID}}-score-custom">Custom: </label>
-  <input type="text" id="ans-{{.AnswerID}}-custom-score" name="ans-{{.AnswerID}}-custom-score" 
+  <input type="number" id="ans-{{.AnswerID}}-custom-score" name="ans-{{.AnswerID}}-custom-score" 
     oninput="scoreChanged(this);" class="custom-score" {{if .CustomPointsAwarded}}value="{{.PointsAwarded}}"{{end}}>
 
 
