@@ -420,7 +420,7 @@ func getPrintableStringFromAnswer(ans *model.Answer) string {
 	case model.AnswerType_INT64_ANSWER:
 		return strconv.FormatInt(ans.GetAnsInt(), 10)
 	case model.AnswerType_FLOAT_ANSWER:
-		return strconv.FormatFloat(float64(ans.GetAnsFloat()), 'G', 2, 32)
+		return strconv.FormatFloat(float64(ans.GetAnsFloat()), 'G', -1, 32)
 	case model.AnswerType_BOOL_ANSWER:
 		if ans.GetAnsBool() {
 			return "True"
