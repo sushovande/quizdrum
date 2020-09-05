@@ -229,6 +229,10 @@ func (c *Controller) GetAllAnswersForQuestion(w http.ResponseWriter, r *http.Req
 	if view.Should500(err, w, "could not parse question id") {
 		return
 	}
+	if qnid < 0 {
+		view.Should500(fmt.Errorf("got negative question id: %v", qnid), w, "Got a negative question ID. Quiz not started yet?")
+		return
+	}
 	sansa, err := c.P.GetAllAnswersToQuestionID(uint(qnid))
 	if view.Should500(err, w, "could not get answers to the question") {
 		return
@@ -371,7 +375,7 @@ func (c *Controller) ReinstateQuiz(w http.ResponseWriter, r *http.Request) {
 	if view.Should500(c.P.ReinstateQuiz(int64(qzid)), w, "could not reinstate quiz") {
 		return
 	}
-	fmt.Fprint(w, "deleted")
+	view.WriteJSONString(w, fmt.Sprint(qzid))
 }
 
 func getIDToScoreMapFromPostForm(p url.Values) (map[int64]int64, error) {

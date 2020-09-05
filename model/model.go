@@ -15,10 +15,9 @@
 package model
 
 import (
-	"github.com/jinzhu/gorm"
-
+	"gorm.io/gorm"
 	// Install the plugin to use with sqlite
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"gorm.io/driver/sqlite"
 )
 
 //go:generate protoc --go_out=. --go_opt=paths=source_relative *.proto
@@ -34,7 +33,9 @@ type Persistence struct {
 func (p *Persistence) Initialize(dbPath string, oci string) error {
 	p.OAuthClientID = oci
 
-	db, err := gorm.Open("sqlite3", dbPath)
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true,
+	})
 	if err != nil {
 		return err
 	}
@@ -47,7 +48,7 @@ func (p *Persistence) Initialize(dbPath string, oci string) error {
 		&GormUser{},
 		&GormCookie{},
 		&GormAccessControl{},
-		&GormCert{}).Error; err != nil {
+		&GormCert{}); err != nil {
 		return err
 	}
 	return nil
@@ -57,5 +58,6 @@ func (p *Persistence) Initialize(dbPath string, oci string) error {
 // This should be defer-called immediately after Initialize is called
 // so that connections can be cleaned up properly.
 func (p *Persistence) Close() {
-	p.db.Close()
+	// Note: the new version of GORM has removed the native Close method.
+	// This placeholder remains, in case the underlying db needs to be manually closed.
 }

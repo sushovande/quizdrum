@@ -17,8 +17,8 @@ package model
 import (
 	"fmt"
 
-	"github.com/jinzhu/gorm"
 	"google.golang.org/protobuf/proto"
+	"gorm.io/gorm"
 )
 
 // GormAnswer is the persisted version of the Answer proto
@@ -126,10 +126,8 @@ func (p *Persistence) GetAnswerByUserAndQuestion(u *User, qn *Question) (*Answer
 
 // GetAllAnswersToQuestionID fetches all the answers to a given question ID
 func (p *Persistence) GetAllAnswersToQuestionID(id uint) ([]*Answer, error) {
-	var gqn GormQuestion
-	gqn.ID = id
 	gas := make([]GormAnswer, 0)
-	err := p.db.Model(&gqn).Related(&gas).Error
+	err := p.db.Find(&gas, "gorm_question_id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -167,9 +165,7 @@ func (p *Persistence) GetAllAnswersForSetOfQuestions(qns []*Question) (map[*Ques
 	board := make(map[*Question][]*Answer)
 	for _, qn := range qns {
 		var ga []GormAnswer
-		var gqn GormQuestion
-		gqn.ID = uint(qn.GetId())
-		if err := p.db.Model(gqn).Related(&ga).Error; err != nil {
+		if err := p.db.Find(&ga, "gorm_question_id = ?", uint(qn.GetId())).Error; err != nil {
 			return nil, err
 		}
 		sansa := make([]*Answer, 0, len(ga))

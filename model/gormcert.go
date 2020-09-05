@@ -137,7 +137,7 @@ func (p *Persistence) GetAllCerts() ([]GormCert, error) {
 // DeleteAllCerts removes all the certificates cached in the db
 func (p *Persistence) DeleteAllCerts() error {
 	gc := make([]GormCert, 0)
-	return p.db.Delete(&gc).Error
+	return p.db.Delete(&gc, "TRUE").Error
 }
 
 // InsertCerts caches all the certificates in the db

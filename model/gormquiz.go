@@ -17,8 +17,8 @@ package model
 import (
 	"fmt"
 
-	"github.com/jinzhu/gorm"
 	"google.golang.org/protobuf/proto"
+	"gorm.io/gorm"
 )
 
 // GormQuiz is the persisted version of the Quiz proto
@@ -56,7 +56,7 @@ func (p *Persistence) GetQuizFromQuestionID(id uint) (*Quiz, error) {
 	if err := p.db.First(&qn, id).Error; err != nil {
 		return nil, err
 	}
-	if err := p.db.Model(&qn).Related(&gq).Error; err != nil {
+	if err := p.db.First(&gq, qn.GormQuizID).Error; err != nil {
 		return nil, err
 	}
 	q, err := getQuizFromGormQuiz(&gq)
@@ -130,7 +130,7 @@ func (p *Persistence) ReinstateQuiz(qzid int64) error {
 		if err := tx.Unscoped().First(&gq, uint(qzid)).Error; err != nil {
 			return err
 		}
-		gq.DeletedAt = nil
+		gq.DeletedAt.Valid = false
 		return tx.Unscoped().Save(&gq).Error
 	})
 }

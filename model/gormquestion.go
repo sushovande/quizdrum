@@ -15,7 +15,7 @@
 package model
 
 import (
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"google.golang.org/protobuf/proto"
 )
 
