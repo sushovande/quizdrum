@@ -21,7 +21,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 )
@@ -51,7 +51,7 @@ func (p *Persistence) GetCertWithID(id string) (*rsa.PublicKey, error) {
 			return r, nil
 		}
 	}
-	return nil, fmt.Errorf("No certs matched")
+	return nil, fmt.Errorf("no certs matched")
 }
 
 // ParseRsaPublicKeyFromPemStr gets a rsa.PublicKey from the string representation
@@ -95,7 +95,10 @@ func FetchCertFromServer() ([]GormCert, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
 	expHdr := resp.Header["Expires"]
 	if len(expHdr) < 1 {
 		return nil, fmt.Errorf("did not get an expires header from Google Certs")
@@ -106,9 +109,6 @@ func FetchCertFromServer() ([]GormCert, error) {
 	}
 	expMs := expTime.UnixNano() / 1000000
 
-	if err != nil {
-		return nil, err
-	}
 	x := make(map[string]string)
 	if err = json.Unmarshal(body, &x); err != nil {
 		return nil, err
