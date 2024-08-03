@@ -19,10 +19,11 @@ import (
 	"net/http"
 	"time"
 
-	"gorm.io/gorm"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-	"gopkg.in/square/go-jose.v2"
+	"gorm.io/gorm"
 )
 
 // GormUser represents a user of the site who has either
@@ -82,31 +83,43 @@ func (p *Persistence) NewGuestLogin(ck string, exp int64) (uint, error) {
 	return gu.ID, nil
 }
 
+// guserProtoContainer is a wrapper on top of the GUser proto
+// that satisfies encoding/json.Unmarshaler, which the jws.Claims
+// call depends upon.
+type guserProtoContainer struct {
+	g *GUser
+}
+
+func (f *guserProtoContainer) UnmarshalJSON(b []byte) error {
+	f.g = &GUser{}
+	return protojson.Unmarshal(b, f.g)
+}
+
 // OAuthLoginFromToken parses the token and returns existing OAuth user if found,
 // or creates a new user if not found.
 func (p *Persistence) OAuthLoginFromToken(idToken string) (*User, error) {
 	if len(idToken) == 0 {
 		return nil, fmt.Errorf("empty idToken")
 	}
-	jws, err := jose.ParseSigned(idToken)
+	jws, err := jwt.ParseSigned(idToken, []jose.SignatureAlgorithm{jose.RS256})
 	if err != nil {
 		return nil, err
 	}
-	gc, err := p.GetCertWithID(jws.Signatures[0].Protected.KeyID)
+
+	kid := jws.Headers[0].KeyID
+	gc, err := p.GetCertWithID(kid)
 	if err != nil {
 		return nil, err
 	}
-	b, err := jws.Verify(gc)
-	if err != nil {
+
+	var fp guserProtoContainer
+	if err = jws.Claims(gc, &fp); err != nil {
 		return nil, err
 	}
-	var g GUser
-	err = protojson.Unmarshal(b, &g)
-	if err != nil {
-		return nil, err
-	}
+
+	g := fp.g
 	if g.GetAud() != p.OAuthClientID {
-		return nil, fmt.Errorf("Wrong client ID")
+		return nil, fmt.Errorf("wrong client ID")
 	}
 
 	// At this point we are confident that `g` is a valid GUser.
@@ -118,7 +131,7 @@ func (p *Persistence) OAuthLoginFromToken(idToken string) (*User, error) {
 
 	if u == nil {
 		var pu User
-		pu.GoogleUser = proto.Clone(&g).(*GUser)
+		pu.GoogleUser = proto.Clone(g).(*GUser)
 		gu, err := getGormUserFromUser(&pu)
 		if err != nil {
 			return nil, err
@@ -132,7 +145,7 @@ func (p *Persistence) OAuthLoginFromToken(idToken string) (*User, error) {
 
 	// This Google user already exists.
 	// Update the google proto and return
-	u.GoogleUser = proto.Clone(&g).(*GUser)
+	u.GoogleUser = proto.Clone(g).(*GUser)
 	gu, err := getGormUserFromUser(u)
 	if err != nil {
 		return nil, err
@@ -225,7 +238,7 @@ func (p *Persistence) ValidateWritePrivileges(qzid int64, u *User) error {
 		} else if aclerr == gorm.ErrRecordNotFound {
 			// This path is only viable if the user is a Google-logged in user
 			if u.GoogleUser.GetSub() == "" {
-				return fmt.Errorf("Non-creator guest users are not allowed to write to quizzes")
+				return fmt.Errorf("non-creator guest users are not allowed to write to quizzes")
 			}
 			// fall back to reading the quiz
 			var qz GormQuiz

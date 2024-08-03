@@ -20,6 +20,7 @@
 <head>
   <title>Log in to QuizDrum</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://accounts.google.com/gsi/client" async></script>
   <meta name="google-signin-client_id" content="{{.OAuthClientID}}">
   <meta name="google" content="notranslate">
   <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
@@ -44,7 +45,25 @@
     <div class="mdc-layout-grid__inner">
       <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
         <h2 class="mdc-typography--headline4 first-header">Log In:</h2>
-        <div id="my-signin2"></div>
+        <div id="my-signin2">
+          <div id="g_id_onload"
+            data-client_id="{{.OAuthClientID}}"
+            data-context="signin"
+            data-ux_mode="popup"
+            data-callback="googleJsSuccess"
+            data-auto_select="true"
+            data-itp_support="true">
+          </div>
+
+          <div class="g_id_signin"
+            data-type="standard"
+            data-shape="rectangular"
+            data-theme="filled_blue"
+            data-text="signin_with"
+            data-size="large"
+            data-logo_alignment="left">
+          </div>
+        </div>
         
         <div class="mdc-touch-target-wrapper">
           <button class="mdc-button mdc-button--raised mdc-button--touch" id="guestloginbtn">
@@ -109,32 +128,16 @@
     }
   }
 
-  function googleJsFailure(o) {
-    document.getElementById('info').innerHTML = "Sign in with Google Failed." + o.error;
-  }
-
-  function googleJsSuccess(googleUser) {
-    const data = new URLSearchParams({'idtoken': googleUser.getAuthResponse().id_token});
+  // credResponse is of type https://developers.google.com/identity/gsi/web/reference/js-reference#CredentialResponse
+  function googleJsSuccess(credResponse) {
+    const data = new URLSearchParams({'idtoken': credResponse.credential});
     postj('/api/common/oauth-login', data)
     .then(j => {
       info.innerHTML = "Logged in as a google user, with ID " + j + ".";
       redirectAsNeeded();
     })
   }
-
-  function renderButton() {
-    gapi.signin2.render('my-signin2', {
-      'scope': 'profile email',
-      'width': 240,
-      'height': 50,
-      'longtitle': true,
-      'theme': 'dark',
-      'onsuccess': googleJsSuccess,
-      'onfailure': googleJsFailure
-    });
-  }
 </script>
-  <script src="https://apis.google.com/js/platform.js?onload=renderButton" async defer></script>
 
 </body>
 </html>

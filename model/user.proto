@@ -17,6 +17,9 @@ syntax = "proto2";
 package model;
 option go_package = "quizdrum/model";
 
+// To compile this file, run this from the src root:
+// protoc --go_out=.. .\model\user.proto
+
 // A user of this site. If the user used Google login, the google_user
 // field will be populated.
 message User {
@@ -89,7 +92,10 @@ message GUser {
   // (integer seconds).
   optional int64 exp = 14;
 
-  // Not known
+  // Timestamp before which the ID is not valid.
+  optional int64 nbf = 17;
+
+  // This is the ID of the JWT
   optional string jti = 15;
 
   // The hosted G Suite domain of the user. Provided only if the user belongs
