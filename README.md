@@ -11,7 +11,7 @@ The QuizDrum backend is written in the Go programming language, and uses SQLite 
 2. Clone this repository and `cd` to it
 3. `go build`
 
-In order to allow quizmasters to log in, you will need to set up a client ID so that they can log in with their Google Account. To do so, follow the steps in the [Create Authorization Credentials](https://developers.google.com/identity/sign-in/web/sign-in#create_authorization_credentials) section, and save the client id. You can then run quizdrum as
+In order to allow quizmasters to log in, you will need to set up a client ID so that they can log in with their Google Account. To do so, follow the steps in the [Create Authorization Credentials](https://developers.google.com/identity/protocols/oauth2/javascript-implicit-flow#creatingcred) section, and save the client id. You can then run quizdrum as
 ```
 quizdrum --port=80 --oauth_client_id=<your-google-client-id>
 ```
