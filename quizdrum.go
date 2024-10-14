@@ -17,12 +17,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"quizdrum/controller"
 	"quizdrum/model"
 	"quizdrum/view"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -34,14 +35,14 @@ func main() {
 	flag.Parse()
 
 	if len(*oauthClientID) == 0 {
-		b, err := ioutil.ReadFile("oauth_client_id.txt")
+		b, err := os.ReadFile("oauth_client_id.txt")
 		if err != nil {
 			panic(fmt.Errorf("--oauth_client_id is empty. You can obtain a client ID from " +
 				"https://developers.google.com/identity/sign-in/web/sign-in#create_authorization_credentials" +
 				"\nYou may also store the client ID in a file called oauth_client_id.txt in the current directory" +
 				" if you don't wish to pass in the command line argument every time."))
 		}
-		*oauthClientID = string(b)
+		*oauthClientID = strings.TrimSpace(string(b))
 	}
 
 	var p model.Persistence

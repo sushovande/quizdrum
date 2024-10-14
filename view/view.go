@@ -17,10 +17,10 @@ package view
 import (
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 )
 
@@ -97,7 +97,7 @@ func WriteJSONString(w http.ResponseWriter, s string) {
 }
 
 func loadAllTemplateFiles() (*template.Template, error) {
-	f, err := ioutil.ReadDir(templateDir)
+	f, err := os.ReadDir(templateDir)
 	if err != nil {
 		return nil, err
 	}
