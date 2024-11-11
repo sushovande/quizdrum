@@ -148,6 +148,8 @@
 
 </div>
 
+
+{{if ne .U.GetId -1}}
 <form id="newquiz" method="POST">
 <div class="mdc-layout-grid">
   <div class="mdc-layout-grid__inner">
@@ -203,6 +205,7 @@
 
 </div>
 </form>
+{{end}}
 
 
   <script>
