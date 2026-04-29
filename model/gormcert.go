@@ -73,18 +73,29 @@ func ParseRsaPublicKeyFromPemStr(pubPEM string) (*rsa.PublicKey, error) {
 func (p *Persistence) GetUsableCerts() ([]GormCert, error) {
 	ct, err := p.GetAllCerts()
 	if err != nil {
-		// Although, one might argue we should delete and fetch at this point
 		return nil, err
 	}
-	if len(ct) < 1 || ct[0].ExpiresMs < time.Now().UnixNano()/1000000 {
-		p.DeleteAllCerts()
-		ct, err = FetchCertFromServer()
-		if err != nil {
-			return nil, err
-		}
-		p.InsertCerts(ct) // We are ignoring the error here, best effort caching
+
+	if len(ct) >= 1 && ct[0].ExpiresMs >= time.Now().UnixNano()/1000000 {
 		return ct, nil
 	}
+
+	// Double-checked locking
+	p.certMu.Lock()
+	defer p.certMu.Unlock()
+
+	// Re-check after acquiring lock
+	ct, err = p.GetAllCerts()
+	if err == nil && len(ct) >= 1 && ct[0].ExpiresMs >= time.Now().UnixNano()/1000000 {
+		return ct, nil
+	}
+
+	p.DeleteAllCerts()
+	ct, err = FetchCertFromServer()
+	if err != nil {
+		return nil, err
+	}
+	p.InsertCerts(ct) // We are ignoring the error here, best effort caching
 	return ct, nil
 }
 

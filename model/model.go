@@ -15,9 +15,10 @@
 package model
 
 import (
-	"gorm.io/gorm"
-	// Install the plugin to use with sqlite
+	"sync"
+
 	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 //go:generate protoc --go_out=. --go_opt=paths=source_relative *.proto
@@ -27,6 +28,8 @@ type Persistence struct {
 	db *gorm.DB
 	// OAuthClientID is the id from the Google Developers API Console that identifies this application
 	OAuthClientID string
+
+	certMu sync.Mutex
 }
 
 // Initialize sets up the connection to the Database.
