@@ -46,6 +46,7 @@ func (c *Controller) HandleGuestLogin(w http.ResponseWriter, r *http.Request) {
 		Value:    ck,
 		Expires:  expiry,
 		HttpOnly: true,
+		Secure:   true,
 		Path:     "/",
 		SameSite: http.SameSiteStrictMode,
 	}
@@ -83,6 +84,7 @@ func (c *Controller) HandleOauthLogin(w http.ResponseWriter, r *http.Request) {
 		Value:    ck,
 		Expires:  expiry,
 		HttpOnly: true,
+		Secure:   true,
 		Path:     "/",
 		SameSite: http.SameSiteStrictMode,
 	}

@@ -39,4 +39,19 @@ func TestGuestLogin(t *testing.T) {
 	if r := resp.Body.String(); r != "1" {
 		t.Errorf("unexpected user id response. want %v, got %v", "1", r)
 	}
+
+	results := resp.Result()
+	cookies := results.Cookies()
+	var found bool
+	for _, ck := range cookies {
+		if ck.Name == "sid" {
+			found = true
+			if !ck.Secure {
+				t.Errorf("cookie sid is not secure")
+			}
+		}
+	}
+	if !found {
+		t.Errorf("cookie sid not found")
+	}
 }
