@@ -187,8 +187,7 @@ func (p *Persistence) NewCookieForUser(ck string, id uint, exp int64) error {
 // Returns nil, nil if record is not found.
 func (p *Persistence) GetUserFromGoogleID(sub string) (*User, error) {
 	var u GormUser
-	u.GoogleID = sub
-	if err := p.db.Where(&u).First(&u).Error; err != nil {
+	if err := p.db.Where("google_id = ?", sub).First(&u).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -200,8 +199,7 @@ func (p *Persistence) GetUserFromGoogleID(sub string) (*User, error) {
 // GetUserFromCookie gets a User from the cookie that was set
 func (p *Persistence) GetUserFromCookie(ck string) (*User, error) {
 	var cgk GormCookie
-	cgk.ID = ck
-	if err := p.db.Where(&cgk).First(&cgk).Error; err != nil {
+	if err := p.db.Where("id = ?", ck).First(&cgk).Error; err != nil {
 		return nil, err
 	}
 	if time.Now().Unix() > cgk.Expiry {
@@ -225,9 +223,7 @@ func (p *Persistence) GetUserFromCookieAndError(ck *http.Cookie, err error) (*Us
 
 // DeleteCookie deletes the cookie from the database
 func (p *Persistence) DeleteCookie(ck string) error {
-	var cgk GormCookie
-	cgk.ID = ck
-	if err := p.db.Delete(&cgk).Error; err != nil {
+	if err := p.db.Where("id = ?", ck).Delete(&GormCookie{}).Error; err != nil {
 		return err
 	}
 	return nil
