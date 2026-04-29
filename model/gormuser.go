@@ -118,8 +118,24 @@ func (p *Persistence) OAuthLoginFromToken(idToken string) (*User, error) {
 	}
 
 	g := fp.g
+	// Validate Issuer
+	if g.GetIss() != "accounts.google.com" && g.GetIss() != "https://accounts.google.com" {
+		return nil, fmt.Errorf("invalid issuer: %s", g.GetIss())
+	}
+
+	// Validate Audience
 	if g.GetAud() != p.OAuthClientID {
 		return nil, fmt.Errorf("wrong client ID")
+	}
+
+	// Validate Expiration
+	if time.Now().Unix() > g.GetExp() {
+		return nil, fmt.Errorf("token expired")
+	}
+
+	// Validate Email Verification
+	if !g.GetEmailVerified() {
+		return nil, fmt.Errorf("email not verified")
 	}
 
 	// At this point we are confident that `g` is a valid GUser.
