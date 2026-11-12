@@ -28,17 +28,17 @@ var (
 	oauthCookieValidity = 60 * 24 * time.Hour
 )
 
-// HandleGuestLogin is the API handler that sets a creates a guest account and sets the cookie
-func (c *Controller) HandleGuestLogin(w http.ResponseWriter, r *http.Request) {
+// SetGuestCookie creates a guest account, sets the sid cookie on the response, and returns the uid.
+func (c *Controller) SetGuestCookie(w http.ResponseWriter, r *http.Request) (uint, error) {
 	ckuuid, err := uuid.NewRandom()
-	if view.Should500(err, w, "could not generate a cookie") {
-		return
+	if err != nil {
+		return 0, err
 	}
 	ck := ckuuid.String()
 	expiry := time.Now().Add(guestCookieValidity)
 	uid, err := c.P.NewGuestLogin(ck, expiry.Unix())
-	if view.Should500(err, w, "could not log in as guest") {
-		return
+	if err != nil {
+		return 0, err
 	}
 
 	cookie := http.Cookie{
@@ -51,6 +51,15 @@ func (c *Controller) HandleGuestLogin(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, &cookie)
+	return uid, nil
+}
+
+// HandleGuestLogin is the API handler that sets a creates a guest account and sets the cookie
+func (c *Controller) HandleGuestLogin(w http.ResponseWriter, r *http.Request) {
+	uid, err := c.SetGuestCookie(w, r)
+	if view.Should500(err, w, "could not log in as guest") {
+		return
+	}
 	view.WriteJSONString(w, fmt.Sprint(uid))
 }
 

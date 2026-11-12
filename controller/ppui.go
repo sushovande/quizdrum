@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"quizdrum/model"
 	"quizdrum/view"
+	"sort"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -200,6 +201,14 @@ func (c *Controller) RenderScoreboard(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
+	// Sort participants descending by total score, secondary sort ascending by name
+	sort.SliceStable(board.PAndScore, func(i, j int) bool {
+		if board.PAndScore[i].Total != board.PAndScore[j].Total {
+			return board.PAndScore[i].Total > board.PAndScore[j].Total
+		}
+		return board.PAndScore[i].ParticipantName < board.PAndScore[j].ParticipantName
+	})
 
 	c.V.RenderTemplate(w, "pp_scoreboard.html", board)
 }

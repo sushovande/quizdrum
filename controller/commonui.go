@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"quizdrum/model"
 	"quizdrum/view"
+	"strings"
 	"time"
 
 	"google.golang.org/protobuf/proto"
@@ -67,6 +68,22 @@ func (c *Controller) RenderHomepage(w http.ResponseWriter, r *http.Request) {
 
 // RenderLogin is the UI handler that shows the login page.
 func (c *Controller) RenderLogin(w http.ResponseWriter, r *http.Request) {
+	forceGuest := r.URL.Query().Get("forceguest")
+	if forceGuest == "1" || strings.ToLower(forceGuest) == "true" {
+		target := r.URL.Query().Get("continue")
+		if target == "" {
+			target = "/"
+		}
+		if _, err := c.P.GetUserFromCookieAndError(r.Cookie("sid")); err != nil {
+			if _, err := c.SetGuestCookie(w, r); err != nil {
+				view.Should500(err, w, "could not log in as guest")
+				return
+			}
+		}
+		http.Redirect(w, r, target, http.StatusTemporaryRedirect)
+		return
+	}
+
 	d := struct {
 		OAuthClientID string
 	}{
