@@ -95,6 +95,6 @@ func main() {
 	r.HandleFunc("/logout", c.HandleLogout)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	fmt.Println("Server ready.")
+	fmt.Printf("Server ready, listening on http://localhost:%v\n", *port)
 	log.Fatal(http.ListenAndServe(":"+*port, r))
 }
