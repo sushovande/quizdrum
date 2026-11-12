@@ -15,6 +15,7 @@
 package model
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/glebarez/sqlite"
@@ -36,13 +37,31 @@ type Persistence struct {
 func (p *Persistence) Initialize(dbPath string, oci string) error {
 	p.OAuthClientID = oci
 
-	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
+	dsn := dbPath
+	if dbPath != ":memory:" && !strings.Contains(dbPath, "mode=memory") {
+		separator := "?"
+		if strings.Contains(dsn, "?") {
+			separator = "&"
+		}
+		dsn = dsn + separator + "_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)"
+	}
+
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 	})
 	if err != nil {
 		return err
 	}
 	p.db = db
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+	// SQLite is an embedded single-file database that supports one writer at a time.
+	// Setting MaxOpenConns to 1 serializes database access within the Go runtime,
+	// eliminating SQLITE_BUSY / database is locked errors under concurrent load.
+	sqlDB.SetMaxOpenConns(1)
 
 	if err = db.AutoMigrate(
 		&GormQuiz{},
@@ -61,6 +80,9 @@ func (p *Persistence) Initialize(dbPath string, oci string) error {
 // This should be defer-called immediately after Initialize is called
 // so that connections can be cleaned up properly.
 func (p *Persistence) Close() {
-	// Note: the new version of GORM has removed the native Close method.
-	// This placeholder remains, in case the underlying db needs to be manually closed.
+	if p.db != nil {
+		if sqlDB, err := p.db.DB(); err == nil {
+			sqlDB.Close()
+		}
+	}
 }

@@ -3,3 +3,5 @@ quizdrum
 *.txt
 *.db
 *.test
+*.db-shm
+*.db-wal
