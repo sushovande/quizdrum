@@ -140,13 +140,28 @@ function populateQuestionForm(j) {
   removeAllMcqRows();
   if (j.choices && j.type == "MULTIPLE_CHOICE_ANSWER") {
     for (let i = 0; i < j.choices.length; i++) {
+      const choicePts = j.choices[i].points !== undefined ? j.choices[i].points : 0;
       if (i == 0) {
         document.getElementById('mcq-inp-1').value = j.choices[0].htmlBody;
+        document.getElementById('mcq-pts-1').value = choicePts;
       } else {
-        addMcqRowWithText(j.choices[i].htmlBody);
+        addMcqRowWithText(j.choices[i].htmlBody, choicePts);
       }
     }
   }
+
+  const boolTruePts = document.getElementById('bool-true-pts');
+  const boolFalsePts = document.getElementById('bool-false-pts');
+  if (boolTruePts && boolFalsePts) {
+    if (j.type == "BOOL_ANSWER") {
+      boolTruePts.value = j.truePoints !== undefined ? j.truePoints : 0;
+      boolFalsePts.value = j.falsePoints !== undefined ? j.falsePoints : 0;
+    } else {
+      boolTruePts.value = 0;
+      boolFalsePts.value = 0;
+    }
+  }
+  qnTypeChanged();
   document.getElementById('btncrt-label').innerHTML = "Update Question";
   document.getElementById('btndel').disabled = false;
 }
@@ -156,8 +171,12 @@ function resetForm() {
   document.getElementById('qn-title').value = '';
   document.getElementById('qn-body').value = '';
   document.getElementById('qn-new-type-text').checked = true;
+  const boolTruePts = document.getElementById('bool-true-pts');
+  const boolFalsePts = document.getElementById('bool-false-pts');
+  if (boolTruePts) boolTruePts.value = 0;
+  if (boolFalsePts) boolFalsePts.value = 0;
   removeAllMcqRows();
-  qnTypeChanged(document.getElementById('qn-new-type-text'));
+  qnTypeChanged();
   let e = new Event('blur', { bubbles: true, cancelable: true });
   document.getElementById('qn-title').dispatchEvent(e);
   document.getElementById('qn-body').dispatchEvent(e);
@@ -174,21 +193,27 @@ function textinput(e) {
   addMcqRowWithText('');
 }
 
-function addMcqRowWithText(txt) {
+function addMcqRowWithText(txt, pts = 0) {
   const ma = document.getElementById("mcq-author");
   const template = document.getElementById('mcq-template');
   let clone = template.content.cloneNode(true);
   const idx = ma.children.length + 1;
   clone.firstElementChild.id = 'mcq-option-' + idx;
   clone.querySelector('strong').innerHTML = 'Option ' + idx + ':';
-  clone.querySelector('input').id = 'mcq-inp-' + idx;
-  clone.querySelector('input').value = txt;
+  const inp = clone.querySelector('input[name="mcq-opt"]');
+  inp.id = 'mcq-inp-' + idx;
+  inp.value = txt;
+  const ptsInp = clone.querySelector('input[name="mcq-pts"]');
+  ptsInp.id = 'mcq-pts-' + idx;
+  ptsInp.value = pts !== undefined ? pts : 0;
   clone.querySelector('button').id = 'mcq-btn-' + idx;
   ma.appendChild(clone);
 }
 
 function removeAllMcqRows() {
   document.getElementById('mcq-inp-1').value = "";
+  const pts1 = document.getElementById('mcq-pts-1');
+  if (pts1) pts1.value = 0;
   const ma = document.getElementById("mcq-author");
   // We have to loop from the bottom up, otherwise the textinput event will fire
   // and add more items (i think).
@@ -204,26 +229,36 @@ function removerow(e) {
   if (ma.children.length == 1) {
     // clicked the only item, just clear the input
     document.getElementById('mcq-inp-1').value = "";
+    const pts1 = document.getElementById('mcq-pts-1');
+    if (pts1) pts1.value = 0;
     return;
   }
-  // Collect the list of strings
-  szMcqTexts = [];
+  // Collect the list of strings and points
+  let szMcqTexts = [];
+  let szMcqPoints = [];
   for (let i = ordinalClicked + 1; i <= ma.children.length; i++) {
     szMcqTexts.push(document.getElementById('mcq-inp-' + i).value);
+    const pElem = document.getElementById('mcq-pts-' + i);
+    szMcqPoints.push(pElem ? pElem.value : 0);
   }
   for (let i = 0; i < szMcqTexts.length; i++) {
     document.getElementById('mcq-inp-' + (ordinalClicked + i)).value = szMcqTexts[i];
+    const pElem = document.getElementById('mcq-pts-' + (ordinalClicked + i));
+    if (pElem) pElem.value = szMcqPoints[i];
   }
   document.getElementById('mcq-option-' + ma.children.length).remove();
 }
 
 function qnTypeChanged(e) {
   const mcqOption = document.getElementById('qn-new-type-mcq');
+  const boolOption = document.getElementById('qn-new-type-bool');
   const authorDiv = document.getElementById('mcq-author-container');
-  if (mcqOption.checked) {
-    authorDiv.style.display = 'block';
-  } else {
-    authorDiv.style.display = 'none';
+  const boolDiv = document.getElementById('bool-author-container');
+  if (authorDiv) {
+    authorDiv.style.display = (mcqOption && mcqOption.checked) ? 'block' : 'none';
+  }
+  if (boolDiv) {
+    boolDiv.style.display = (boolOption && boolOption.checked) ? 'block' : 'none';
   }
 }
 
@@ -278,8 +313,17 @@ function btnqzundodelClick(e) {
 }
 
 
-function btn_nextqClick(e) {
+async function btn_nextqClick(e) {
   const curId = parseInt(document.getElementById('qn-id').value);
+  const formElement = document.getElementById('scoringform');
+  if (formElement && curId > 0) {
+    const data = new URLSearchParams(new FormData(formElement));
+    try {
+      await posty('/api/quizmaster/question/' + curId + '/savescores', data);
+    } catch (err) {
+      console.error("Failed to save scores:", err);
+    }
+  }
   const qnIndex = allQuestionIds.indexOf(curId);
   const nextIndex = qnIndex + 1;
   sendCurrentQuestion(nextIndex);

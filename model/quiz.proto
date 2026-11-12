@@ -83,10 +83,15 @@ message Question {
 
   // Responses to this question by the participants
   repeated Answer answers = 7;
+
+  // Points allocated to options for True/False questions (BOOL_ANSWER)
+  optional int64 true_points = 8 [default = 0];
+  optional int64 false_points = 9 [default = 0];
 }
 
 message AnswerChoice {
   optional string html_body = 1;
+  optional int64 points = 2 [default = 0];
 }
 
 enum AnswerType {
@@ -114,4 +119,5 @@ message Answer {
 
   optional int64 response_time_s = 10;
   optional int64 points_awarded = 11;
+  optional bool scores_saved = 13 [default = false];
 }

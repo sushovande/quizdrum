@@ -194,8 +194,10 @@ func (c *Controller) RenderScoreboard(w http.ResponseWriter, r *http.Request) {
 		x := qnToIndex[qn.GetId()]
 		for _, ans := range ansmap[qn] {
 			y := ppToIndex[ans.GetSolverId()]
-			board.PAndScore[y].Score[x] = ans.GetPointsAwarded()
-			board.PAndScore[y].Total += ans.GetPointsAwarded()
+			if ans.GetScoresSaved() {
+				board.PAndScore[y].Score[x] = ans.GetPointsAwarded()
+				board.PAndScore[y].Total += ans.GetPointsAwarded()
+			}
 		}
 	}
 

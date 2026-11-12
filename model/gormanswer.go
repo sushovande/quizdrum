@@ -50,11 +50,8 @@ func (p *Persistence) CreateAnswer(ans *Answer) (uint, error) {
 		}
 
 		if ga.ID != 0 {
-			oldAns, err := getAnswerFromGormAnswer(ga)
-			if err != nil {
-				return err
-			}
-			ans.PointsAwarded = proto.Int64(oldAns.GetPointsAwarded())
+			ans.PointsAwarded = proto.Int64(0)
+			ans.ScoresSaved = proto.Bool(false)
 		}
 
 		b, err := proto.Marshal(ans)
@@ -94,7 +91,8 @@ func (p *Persistence) UpdateAnswer(ans *Answer) error {
 				"unauthorized update qnid: %v belongs to %v and not current user %v",
 				oldAns.GetId(), oldAns.GetSolverId(), ans.GetSolverId())
 		}
-		ans.PointsAwarded = proto.Int64(oldAns.GetPointsAwarded())
+		ans.PointsAwarded = proto.Int64(0)
+		ans.ScoresSaved = proto.Bool(false)
 		nga, err := getGormAnswerFromAnswer(ans)
 		if err != nil {
 			return err
