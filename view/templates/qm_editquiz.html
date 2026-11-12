@@ -337,12 +337,28 @@
               </div>
             </div>
           
-            <div id="mcq-author-container" class="mdc-typography--body1 breather-on-top">
-              For multiple choice questions only, set the options:
+            <div id="bool-author-container" class="mdc-typography--body1 breather-on-top" style="display: none;">
+              For true or false questions, optionally allocate points to each option:
+              <div class="breather-on-top">
+                <strong>True:</strong>
+                <span>Points:</span>
+                <input type="number" id="bool-true-pts" name="bool-true-pts" value="0" style="width: 4em;">
+              </div>
+              <div class="breather-on-top">
+                <strong>False:</strong>
+                <span>Points:</span>
+                <input type="number" id="bool-false-pts" name="bool-false-pts" value="0" style="width: 4em;">
+              </div>
+            </div>
+
+            <div id="mcq-author-container" class="mdc-typography--body1 breather-on-top" style="display: none;">
+              For multiple choice questions, set the options and optionally allocate points:
               <div id="mcq-author">
                 <div id="mcq-option-1">
                   <strong>Option 1:</strong>
                   <input type="text" id="mcq-inp-1" name="mcq-opt" oninput="textinput(this)">
+                  <span>Points:</span>
+                  <input type="number" id="mcq-pts-1" name="mcq-pts" value="0" style="width: 4em;">
                   <button type="button" id="mcq-btn-1" onclick="removerow(this)">❌</button>
                 </div>
               </div>
@@ -350,6 +366,8 @@
                 <div>
                   <strong>Option x:</strong>
                   <input type="text" name="mcq-opt" oninput="textinput(this)">
+                  <span>Points:</span>
+                  <input type="number" name="mcq-pts" value="0" style="width: 4em;">
                   <button type="button" onclick="removerow(this)">❌</button>
                 </div>
               </template>

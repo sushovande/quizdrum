@@ -79,6 +79,8 @@ func (c *Controller) SubmitAnswer(w http.ResponseWriter, r *http.Request) {
 
 	ans.ResponseTimeS = proto.Int64(time.Now().Unix())
 	ans.SolverId = proto.Int64(u.GetId())
+	ans.PointsAwarded = proto.Int64(0)
+	ans.ScoresSaved = proto.Bool(false)
 	// TODO: validate that the answer type matches the question type
 	if ans.GetId() != 0 {
 		// Update

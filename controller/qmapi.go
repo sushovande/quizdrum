@@ -177,10 +177,31 @@ func (c *Controller) SetActiveQuestionID(w http.ResponseWriter, r *http.Request)
 	}
 	for _, qn := range qz.GetQuestions() {
 		if qn.GetId() == int64(qnid) {
+			prevLiveQnId := qz.GetLiveQuestionId()
 			qz.LiveQuestionId = proto.Int64(int64(qnid))
 			qz.AcceptingResponses = proto.Bool(true)
 			if view.Should500(c.P.SaveQuiz(qz), w, "could not save quiz") {
 				return
+			}
+			// When moving to the next question, finalize automatic scoring for the previous question if not yet saved
+			if prevLiveQnId > 0 && prevLiveQnId != int64(qnid) {
+				prevQnId := uint(prevLiveQnId)
+				if prevAns, err := c.P.GetAllAnswersToQuestionID(prevQnId); err == nil && len(prevAns) > 0 {
+					if prevQn, err := c.P.GetQuestionByID(prevQnId); err == nil {
+						unscored := make([]*model.Answer, 0)
+						for _, ans := range prevAns {
+							if !ans.GetScoresSaved() {
+								autoPts, _ := GetAutomaticPointsForAnswer(prevQn, ans)
+								ans.PointsAwarded = proto.Int64(autoPts)
+								ans.ScoresSaved = proto.Bool(true)
+								unscored = append(unscored, ans)
+							}
+						}
+						if len(unscored) > 0 {
+							_ = c.P.SaveMultipleAnswers(unscored)
+						}
+					}
+				}
 			}
 			fmt.Fprintln(w, "Saved")
 			return
@@ -243,6 +264,11 @@ func (c *Controller) GetAllAnswersForQuestion(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	qn, err := c.P.GetQuestionByID(uint(qnid))
+	if view.Should500(err, w, "could not find the related question") {
+		return
+	}
+
 	type ansDisplay struct {
 		AnswerID            int64
 		SolverID            int64
@@ -266,10 +292,16 @@ func (c *Controller) GetAllAnswersForQuestion(w http.ResponseWriter, r *http.Req
 		}
 		ad.AnswerDisplayText = getPrintableStringFromAnswer(ans)
 		ad.ResponseTimeS = ans.GetResponseTimeS()
-		ad.PointsAwarded = ans.GetPointsAwarded()
-		ad.CustomPointsAwarded = !(ans.GetPointsAwarded() == 0 ||
-			ans.GetPointsAwarded() == 5 ||
-			ans.GetPointsAwarded() == 10)
+		points := ans.GetPointsAwarded()
+		if !ans.GetScoresSaved() {
+			if autoPts, hasAuto := GetAutomaticPointsForAnswer(qn, ans); hasAuto {
+				points = autoPts
+			}
+		}
+		ad.PointsAwarded = points
+		ad.CustomPointsAwarded = !(points == 0 ||
+			points == 5 ||
+			points == 10)
 		dasp = append(dasp, ad)
 	}
 
@@ -287,6 +319,7 @@ func (c *Controller) SaveScores(w http.ResponseWriter, r *http.Request) {
 	if view.Should500(err, w, "could not get answers to the question") {
 		return
 	}
+	qn, _ := c.P.GetQuestionByID(uint(qnid))
 	r.ParseForm()
 	obtainedScores, err := getIDToScoreMapFromPostForm(r.PostForm)
 	if view.Should500(err, w, "could not figure out the score assignment properly") {
@@ -295,10 +328,16 @@ func (c *Controller) SaveScores(w http.ResponseWriter, r *http.Request) {
 	answersToUpdate := make([]*model.Answer, 0)
 	for _, ans := range sansa {
 		if val, ok := obtainedScores[ans.GetId()]; ok {
-			if ans.GetPointsAwarded() != val {
+			if ans.GetPointsAwarded() != val || !ans.GetScoresSaved() {
 				ans.PointsAwarded = proto.Int64(val)
+				ans.ScoresSaved = proto.Bool(true)
 				answersToUpdate = append(answersToUpdate, ans)
 			}
+		} else if !ans.GetScoresSaved() {
+			autoPts, _ := GetAutomaticPointsForAnswer(qn, ans)
+			ans.PointsAwarded = proto.Int64(autoPts)
+			ans.ScoresSaved = proto.Bool(true)
+			answersToUpdate = append(answersToUpdate, ans)
 		}
 	}
 	if view.Should500(c.P.SaveMultipleAnswers(answersToUpdate), w, "could not save the scores") {
@@ -449,4 +488,36 @@ func setQMProfileInQuiz(u *model.User, qz *model.Quiz) {
 		qmf.GoogleEmail = proto.String(u.GoogleUser.GetEmail())
 	}
 	qz.Quizmasters = append(qz.Quizmasters, &qmf)
+}
+
+// GetAutomaticPointsForAnswer returns the points allocated to the chosen option for multiple choice
+// or true/false questions, and whether any non-zero points were allocated.
+func GetAutomaticPointsForAnswer(qn *model.Question, ans *model.Answer) (int64, bool) {
+	if qn == nil || ans == nil {
+		return 0, false
+	}
+	switch qn.GetType() {
+	case model.AnswerType_MULTIPLE_CHOICE_ANSWER:
+		idx := ans.GetAnsChoiceIndex()
+		choices := qn.GetChoices()
+		if idx >= 0 && int(idx) < len(choices) {
+			pts := choices[idx].GetPoints()
+			if pts != 0 {
+				return pts, true
+			}
+		}
+	case model.AnswerType_BOOL_ANSWER:
+		if ans.GetAnsBool() {
+			pts := qn.GetTruePoints()
+			if pts != 0 {
+				return pts, true
+			}
+		} else {
+			pts := qn.GetFalsePoints()
+			if pts != 0 {
+				return pts, true
+			}
+		}
+	}
+	return 0, false
 }

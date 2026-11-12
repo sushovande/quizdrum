@@ -97,13 +97,21 @@ func WriteJSONString(w http.ResponseWriter, s string) {
 }
 
 func loadAllTemplateFiles() (*template.Template, error) {
-	f, err := os.ReadDir(templateDir)
+	dir := templateDir
+	f, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, err
+		// If running from a package subfolder (like during testing), try parent directory
+		altDir := path.Join("..", templateDir)
+		if fAlt, errAlt := os.ReadDir(altDir); errAlt == nil {
+			dir = altDir
+			f = fAlt
+		} else {
+			return nil, err
+		}
 	}
 	fnames := make([]string, len(f))
 	for i, v := range f {
-		fnames[i] = path.Join(templateDir, v.Name())
+		fnames[i] = path.Join(dir, v.Name())
 	}
 
 	fc := template.FuncMap{

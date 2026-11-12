@@ -52,9 +52,24 @@ func GetQuestionFromPostBody(p url.Values) (*model.Question, error) {
 		qn.Type = model.AnswerType_INT64_ANSWER.Enum()
 	case "bool":
 		qn.Type = model.AnswerType_BOOL_ANSWER.Enum()
+		var truePts int64 = 0
+		if val, ok := p["bool-true-pts"]; ok && len(val) > 0 && val[0] != "" {
+			if parsed, err := strconv.ParseInt(val[0], 10, 64); err == nil {
+				truePts = parsed
+			}
+		}
+		qn.TruePoints = proto.Int64(truePts)
+
+		var falsePts int64 = 0
+		if val, ok := p["bool-false-pts"]; ok && len(val) > 0 && val[0] != "" {
+			if parsed, err := strconv.ParseInt(val[0], 10, 64); err == nil {
+				falsePts = parsed
+			}
+		}
+		qn.FalsePoints = proto.Int64(falsePts)
 	case "mcq":
 		qn.Type = model.AnswerType_MULTIPLE_CHOICE_ANSWER.Enum()
-		if err = setMcqOptionsFromFormValues(p["mcq-opt"], &qn); err != nil {
+		if err = setMcqOptionsFromFormValues(p["mcq-opt"], p["mcq-pts"], &qn); err != nil {
 			return nil, err
 		}
 	case "float":
@@ -65,18 +80,25 @@ func GetQuestionFromPostBody(p url.Values) (*model.Question, error) {
 	return &qn, nil
 }
 
-func setMcqOptionsFromFormValues(f []string, qn *model.Question) error {
+func setMcqOptionsFromFormValues(f []string, pts []string, qn *model.Question) error {
 	if len(f) == 0 {
 		return fmt.Errorf("A multiple choice question must have the options set")
 	}
 
 	count := 0
-	for _, v := range f {
+	for i, v := range f {
 		if len(v) < 1 {
 			continue
 		}
 		var ch model.AnswerChoice
 		ch.HtmlBody = proto.String(v)
+		var p int64 = 0
+		if i < len(pts) && pts[i] != "" {
+			if parsed, err := strconv.ParseInt(pts[i], 10, 64); err == nil {
+				p = parsed
+			}
+		}
+		ch.Points = proto.Int64(p)
 		qn.Choices = append(qn.Choices, &ch)
 		count++
 	}
