@@ -6,10 +6,9 @@ You can install QuizDrum on most operating systems, but it has only been tested 
 *This is not an officially supported Google product.*
 
 ## Installation
-The QuizDrum backend is written in the Go programming language, and uses SQLite for data storage. You should first [install Go](https://golang.org/dl/), if you don't already have it. Since the go version of SQLite requires `gcc` in the path during installation, and requires the variable `CGO_ENABLED=1` to be set in the environment, please see the [instructions on installing SQLite](https://github.com/mattn/go-sqlite3#installation) first, before proceeding further. Particularly on Windows, where having `gcc` in the path is uncommon, you may have to install the 64-bit `gcc` from a source like [tdm-gcc](https://jmeubank.github.io/tdm-gcc/).
-1. Confirm you have installed Go and SQLite as described above
-2. Clone this repository and `cd` to it
-3. `go build`
+The QuizDrum backend is written in the Go programming language, and uses SQLite for data storage. You should first [install Go](https://golang.org/dl/), if you don't already have it.
+1. Clone this repository and `cd` to it
+2. `go build`
 
 In order to allow quizmasters to log in, you will need to set up a client ID so that they can log in with their Google Account. To do so, follow the steps in the [Create Authorization Credentials](https://developers.google.com/identity/protocols/oauth2/javascript-implicit-flow#creatingcred) section, and save the client id. You can then run quizdrum as
 ```

@@ -17,7 +17,7 @@ package model
 import (
 	"sync"
 
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 
