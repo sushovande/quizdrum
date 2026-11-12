@@ -32,6 +32,7 @@ type savedHTTPResponse struct {
 	statuscode int
 	resptext   string
 	cookie     *http.Cookie
+	header     http.Header
 }
 
 // callController is a helper method that calls the given controller function
@@ -52,6 +53,7 @@ func callController(verb string, path string, body string, cookie *http.Cookie,
 	f(resp, req)
 	r.statuscode = resp.Result().StatusCode
 	r.resptext = resp.Body.String()
+	r.header = resp.Result().Header
 	for _, ck := range resp.Result().Cookies() {
 		if ck.Name == "sid" {
 			r.cookie = ck
@@ -563,6 +565,177 @@ func TestAutomaticGradingJourney(t *testing.T) {
 		r := callController("GET", fmt.Sprintf("/participant/quiz/%v/scoreboard", qzid), "", ppCookie, vars, c.RenderScoreboard)
 		if !strings.Contains(r.resptext, `<td class="mdc-data-table__cell">18</td>`) {
 			t.Fatalf("Scorecard should reflect re-saved score (total 18). Got:\n%v", r.resptext)
+		}
+	}
+}
+
+func TestForceGuestLogin(t *testing.T) {
+	var p model.Persistence
+	p.Initialize(":memory:", "oauth_client_fake_id")
+	var v view.View
+	v.Initialize()
+	c := Controller{
+		P: &p, V: &v,
+	}
+
+	// 1. Regular /login without forceguest renders login page (status 200)
+	{
+		r := callController("GET", "/login", "", nil, nil, c.RenderLogin)
+		if r.statuscode != http.StatusOK {
+			t.Fatalf("expected status 200, got %v", r.statuscode)
+		}
+		if r.cookie != nil {
+			t.Fatalf("expected no cookie set on regular login page")
+		}
+	}
+
+	// 2. /login?forceguest=1&continue=/participant/quiz/42/createprofile without cookie
+	var guestCookie *http.Cookie
+	{
+		r := callController("GET", "/login?forceguest=1&continue=/participant/quiz/42/createprofile", "", nil, nil, c.RenderLogin)
+		if r.statuscode != http.StatusTemporaryRedirect {
+			t.Fatalf("expected status 307, got %v", r.statuscode)
+		}
+		if r.header.Get("Location") != "/participant/quiz/42/createprofile" {
+			t.Fatalf("expected redirect to continue url, got %v", r.header.Get("Location"))
+		}
+		if r.cookie == nil || r.cookie.Value == "" {
+			t.Fatalf("expected sid cookie to be set")
+		}
+		guestCookie = r.cookie
+
+		// Verify user exists in database
+		u, err := c.P.GetUserFromCookieAndError(guestCookie, nil)
+		if err != nil || u == nil {
+			t.Fatalf("failed to retrieve user from generated guest cookie: %v", err)
+		}
+	}
+
+	// 3. /login?forceguest=true with existing cookie keeps session and redirects to continue
+	{
+		r := callController("GET", "/login?forceguest=true&continue=/participant/quiz/42/currentquestion", "", guestCookie, nil, c.RenderLogin)
+		if r.statuscode != http.StatusTemporaryRedirect {
+			t.Fatalf("expected status 307, got %v", r.statuscode)
+		}
+		if r.header.Get("Location") != "/participant/quiz/42/currentquestion" {
+			t.Fatalf("expected redirect to continue url, got %v", r.header.Get("Location"))
+		}
+	}
+
+	// 4. /login?forceguest=1 without continue param redirects to "/"
+	{
+		r := callController("GET", "/login?forceguest=1", "", nil, nil, c.RenderLogin)
+		if r.statuscode != http.StatusTemporaryRedirect {
+			t.Fatalf("expected status 307, got %v", r.statuscode)
+		}
+		if r.header.Get("Location") != "/" {
+			t.Fatalf("expected redirect to /, got %v", r.header.Get("Location"))
+		}
+	}
+}
+
+func TestScoreboardSorting(t *testing.T) {
+	var p model.Persistence
+	p.Initialize(":memory:", "oauth_client_fake_id")
+	var v view.View
+	v.Initialize()
+	c := Controller{
+		P: &p, V: &v,
+	}
+
+	// QM logs in and creates a quiz with 1 question
+	r := callController("POST", "/api/common/guest-login", "", nil, nil, c.HandleGuestLogin)
+	qmCookie := r.cookie
+
+	r = callController("POST", "/api/quizmaster/newquiz", "quiz-title=SortingQuiz&quiz-descr=SortingDescr", qmCookie, nil, c.NewQuiz)
+	qzid, _ := strconv.Atoi(r.resptext)
+
+	r = callController("POST", "/api/quizmaster/question/new",
+		fmt.Sprintf("quiz-id=%v&qn-title=Q1&qn-body=Q1Body&qn-type=text", qzid), qmCookie, nil, c.NewQuestion)
+	qnid, _ := strconv.Atoi(r.resptext)
+
+	// Set question as active
+	callController("POST", fmt.Sprintf("/api/quizmaster/quiz/%v/setactive/%v", qzid, qnid),
+		"", qmCookie, map[string]string{"quizid": fmt.Sprint(qzid), "questionid": fmt.Sprint(qnid)}, c.SetActiveQuestionID)
+
+	// Create 3 participants: Alice, Bob, Charlie
+	createParticipant := func(name string) *http.Cookie {
+		rGuest := callController("POST", "/api/common/guest-login", "", nil, nil, c.HandleGuestLogin)
+		ck := rGuest.cookie
+		callController("POST", "/api/participant/set-profile",
+			fmt.Sprintf("quiz-id=%v&profile-name=%v", qzid, name), ck, nil, c.SetProfile)
+		return ck
+	}
+
+	aliceCookie := createParticipant("Alice")
+	bobCookie := createParticipant("Bob")
+	charlieCookie := createParticipant("Charlie")
+
+	// Submit answers
+	submitAns := func(ck *http.Cookie, ansText string) int {
+		rAns := callController("POST", "/api/participant/submit-answer",
+			fmt.Sprintf("qz-id=%v&qn-id=%v&ans-text=%v", qzid, qnid, ansText), ck, nil, c.SubmitAnswer)
+		id, _ := strconv.Atoi(rAns.resptext)
+		return id
+	}
+
+	aliceAns := submitAns(aliceCookie, "ansA")
+	bobAns := submitAns(bobCookie, "ansB")
+	charlieAns := submitAns(charlieCookie, "ansC")
+
+	// QM saves scores: Alice gets 10, Bob gets 30, Charlie gets 20
+	scoreBody := fmt.Sprintf("ans-%v-score=custom&ans-%v-custom-score=10&ans-%v-score=custom&ans-%v-custom-score=30&ans-%v-score=custom&ans-%v-custom-score=20",
+		aliceAns, aliceAns, bobAns, bobAns, charlieAns, charlieAns)
+	callController("POST", fmt.Sprintf("/api/quizmaster/question/%v/savescores", qnid),
+		scoreBody, qmCookie, map[string]string{"questionid": fmt.Sprint(qnid)}, c.SaveScores)
+
+	// Check Participant Scoreboard: order should be Bob (30), Charlie (20), Alice (10)
+	{
+		rSc := callController("GET", fmt.Sprintf("/participant/quiz/%v/scoreboard", qzid),
+			"", aliceCookie, map[string]string{"quizid": fmt.Sprint(qzid)}, c.RenderScoreboard)
+		if rSc.statuscode != 200 {
+			t.Fatalf("failed to render participant scoreboard: %v", rSc.resptext)
+		}
+		tbodyStart := strings.Index(rSc.resptext, `<tbody class="mdc-data-table__content">`)
+		if tbodyStart == -1 {
+			t.Fatalf("could not find tbody in participant scoreboard")
+		}
+		tableContent := rSc.resptext[tbodyStart:]
+		bobPos := strings.Index(tableContent, "Bob")
+		charliePos := strings.Index(tableContent, "Charlie")
+		alicePos := strings.Index(tableContent, "Alice")
+
+		if bobPos == -1 || charliePos == -1 || alicePos == -1 {
+			t.Fatalf("missing participant in scoreboard output: %v", tableContent)
+		}
+		if !(bobPos < charliePos && charliePos < alicePos) {
+			t.Fatalf("scoreboard not sorted DESC by total points! bobPos=%v, charliePos=%v, alicePos=%v",
+				bobPos, charliePos, alicePos)
+		}
+	}
+
+	// Check Quizmaster Scoreboard: same order Bob, Charlie, Alice
+	{
+		rSc := callController("GET", fmt.Sprintf("/quizmaster/quiz/%v/scoreboard", qzid),
+			"", qmCookie, map[string]string{"quizid": fmt.Sprint(qzid)}, c.RenderQMScoreboard)
+		if rSc.statuscode != 200 {
+			t.Fatalf("failed to render QM scoreboard: %v", rSc.resptext)
+		}
+		tbodyStart := strings.Index(rSc.resptext, `<tbody class="mdc-data-table__content">`)
+		if tbodyStart == -1 {
+			t.Fatalf("could not find tbody in QM scoreboard")
+		}
+		tableContent := rSc.resptext[tbodyStart:]
+		bobPos := strings.Index(tableContent, "Bob")
+		charliePos := strings.Index(tableContent, "Charlie")
+		alicePos := strings.Index(tableContent, "Alice")
+
+		if bobPos == -1 || charliePos == -1 || alicePos == -1 {
+			t.Fatalf("missing participant in QM scoreboard output: %v", tableContent)
+		}
+		if !(bobPos < charliePos && charliePos < alicePos) {
+			t.Fatalf("QM scoreboard not sorted DESC by total points! bobPos=%v, charliePos=%v, alicePos=%v",
+				bobPos, charliePos, alicePos)
 		}
 	}
 }
