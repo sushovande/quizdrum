@@ -100,7 +100,7 @@ func (c *Controller) HandleLogout(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(-24 * time.Hour),
 		HttpOnly: true,
 		Path:     "/",
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	}
 	http.SetCookie(w, &expiredCookie)
 	d := struct {

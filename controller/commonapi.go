@@ -48,7 +48,7 @@ func (c *Controller) SetGuestCookie(w http.ResponseWriter, r *http.Request) (uin
 		HttpOnly: true,
 		Secure:   true,
 		Path:     "/",
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	}
 	http.SetCookie(w, &cookie)
 	return uid, nil
@@ -95,7 +95,7 @@ func (c *Controller) HandleOauthLogin(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure:   true,
 		Path:     "/",
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	}
 	http.SetCookie(w, &cookie)
 	view.WriteJSONString(w, fmt.Sprint(u.GetId()))

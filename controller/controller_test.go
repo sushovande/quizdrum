@@ -634,6 +634,72 @@ func TestForceGuestLogin(t *testing.T) {
 	}
 }
 
+func TestForceGuestLoginWithExistingCookie(t *testing.T) {
+	var p model.Persistence
+	p.Initialize(":memory:", "oauth_client_fake_id")
+	var v view.View
+	v.Initialize()
+	c := Controller{
+		P: &p, V: &v,
+	}
+
+	// Simulate a user who already has a valid sid cookie from a prior session
+	loginResp := callController("POST", "/api/common/guest-login", "", nil, nil, c.HandleGuestLogin)
+	existingCookie := loginResp.cookie
+	if existingCookie == nil || existingCookie.Value == "" {
+		t.Fatalf("expected initial guest login to set sid cookie")
+	}
+	origUser, err := c.P.GetUserFromCookieAndError(existingCookie, nil)
+	if err != nil || origUser == nil {
+		t.Fatalf("expected initial cookie to resolve to a user: %v", err)
+	}
+
+	// 1. Valid existing cookie + forceguest=1 preserves the session and redirects to continue
+	{
+		r := callController("GET", "/login?continue=/participant/quiz/42/createprofile&forceguest=1", "", existingCookie, nil, c.RenderLogin)
+		if r.statuscode != http.StatusTemporaryRedirect {
+			t.Fatalf("expected status 307, got %v", r.statuscode)
+		}
+		if r.header.Get("Location") != "/participant/quiz/42/createprofile" {
+			t.Fatalf("expected redirect to continue url, got %v", r.header.Get("Location"))
+		}
+		if r.cookie != nil {
+			t.Fatalf("expected no new cookie to be set when existing cookie is valid, got %v", r.cookie)
+		}
+
+		afterUser, err := c.P.GetUserFromCookieAndError(existingCookie, nil)
+		if err != nil || afterUser == nil {
+			t.Fatalf("expected existing cookie to remain valid: %v", err)
+		}
+		if afterUser.GetId() != origUser.GetId() {
+			t.Fatalf("expected same user ID %v, got %v", origUser.GetId(), afterUser.GetId())
+		}
+	}
+
+	// 2. Invalid/unknown cookie + forceguest=1 issues a new guest cookie and redirects to continue
+	{
+		staleCookie := &http.Cookie{Name: "sid", Value: "nonexistent-session-id"}
+		r := callController("GET", "/login?continue=/participant/quiz/42/createprofile&forceguest=1", "", staleCookie, nil, c.RenderLogin)
+		if r.statuscode != http.StatusTemporaryRedirect {
+			t.Fatalf("expected status 307, got %v", r.statuscode)
+		}
+		if r.header.Get("Location") != "/participant/quiz/42/createprofile" {
+			t.Fatalf("expected redirect to continue url, got %v", r.header.Get("Location"))
+		}
+		if r.cookie == nil || r.cookie.Value == "" || r.cookie.Value == staleCookie.Value {
+			t.Fatalf("expected a new guest sid cookie to be set, got %v", r.cookie)
+		}
+
+		newUser, err := c.P.GetUserFromCookieAndError(r.cookie, nil)
+		if err != nil || newUser == nil {
+			t.Fatalf("expected new guest cookie to resolve to a user: %v", err)
+		}
+		if newUser.GetId() == origUser.GetId() {
+			t.Fatalf("expected new guest user ID to differ from original user ID %v", origUser.GetId())
+		}
+	}
+}
+
 func TestScoreboardSorting(t *testing.T) {
 	var p model.Persistence
 	p.Initialize(":memory:", "oauth_client_fake_id")
